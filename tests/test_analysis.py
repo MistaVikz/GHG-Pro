@@ -5,44 +5,40 @@ import pandas as pd
 class TestCalculateTopBottomProjects(unittest.TestCase):
     def setUp(self):
         self.df_project = pd.DataFrame({
-            'expected_value_percentage_year_1': [0.1, 0.2, 0.3],
-            'expected_value_percentage_year_2': [0.4, 0.5, 0.6],
-            'expected_value_percentage_year_3': [0.7, 0.8, 0.9],
-            'expected_value_percentage_year_4': [0.1, 0.2, 0.3],
-            'expected_value_percentage_year_5': [0.4, 0.5, 0.6],
-            'expected_value_percentage_year_6': [0.7, 0.8, 0.9],
-            'expected_value_percentage_year_7': [0.1, 0.2, 0.3],
-            'expected_value_percentage_year_8': [0.4, 0.5, 0.6],
-            'expected_value_percentage_year_9': [0.7, 0.8, 0.9],
-            'expected_value_percentage_year_10': [0.1, 0.2, 0.3],
-            'project_name': ['Project A', 'Project B', 'Project C']
+            'project_id': [1, 2, 3, 4, 5],
+            'project_name': ['Project 1', 'Project 2', 'Project 3', 'Project 4', 'Project 5'],
+            'project_expected_value_percentage_year_1': [10, 20, 30, 40, 50],
+            'project_expected_value_percentage_year_2': [20, 30, 40, 50, 60],
+            'project_expected_value_percentage_year_3': [30, 40, 50, 60, 70],
+            'project_expected_value_percentage_year_4': [40, 50, 60, 70, 80],
+            'project_expected_value_percentage_year_5': [50, 60, 70, 80, 90],
+            'project_expected_value_percentage_year_6': [60, 70, 80, 90, 100],
+            'project_expected_value_percentage_year_7': [70, 80, 90, 100, 110],
+            'project_expected_value_percentage_year_8': [80, 90, 100, 110, 120],
+            'project_expected_value_percentage_year_9': [90, 100, 110, 120, 130],
+            'project_expected_value_percentage_year_10': [100, 110, 120, 130, 140]
         })
+        self.num_projects = 2
+        self.columns = ['project_id', 'project_name']
 
-    def test_valid_input(self):
-        top_projects, bottom_projects = calculate_top_bottom_projects(self.df_project, num_projects=2, columns=['project_name'])
-        self.assertEqual(len(top_projects), 2)
-        self.assertEqual(len(bottom_projects), 2)
+    def test_calculate_top_bottom_projects(self):
+        top_projects, bottom_projects = calculate_top_bottom_projects(self.df_project, self.num_projects, self.columns)
+        self.assertEqual(top_projects.shape[0], self.num_projects)
+        self.assertEqual(bottom_projects.shape[0], self.num_projects)
 
-    def test_invalid_column_names(self):
+        self.assertIn('rank', top_projects.columns)
+        self.assertIn('rank', bottom_projects.columns)
+
+        self.assertEqual(top_projects['rank'].tolist(), [1, 2])
+        self.assertEqual(bottom_projects['rank'].tolist(), [1, 2])
+
+    def test_calculate_top_bottom_projects_invalid_num_projects(self):
+        with self.assertRaises(ValueError):
+            calculate_top_bottom_projects(self.df_project, 0, self.columns)
+
+    def test_calculate_top_bottom_projects_invalid_columns(self):
         with self.assertRaises(KeyError):
-            calculate_top_bottom_projects(self.df_project, num_projects=2, columns=['invalid_column_name'])
-
-    def test_non_numeric_values(self):
-        df_project = pd.DataFrame({
-            'expected_value_percentage_year_1': ['a', 'b', 'c'],
-            'expected_value_percentage_year_2': [0.4, 0.5, 0.6],
-            'expected_value_percentage_year_3': [0.7, 0.8, 0.9],
-            'expected_value_percentage_year_4': [0.1, 0.2, 0.3],
-            'expected_value_percentage_year_5': [0.4, 0.5, 0.6],
-            'expected_value_percentage_year_6': [0.7, 0.8, 0.9],
-            'expected_value_percentage_year_7': [0.1, 0.2, 0.3],
-            'expected_value_percentage_year_8': [0.4, 0.5, 0.6],
-            'expected_value_percentage_year_9': [0.7, 0.8, 0.9],
-            'expected_value_percentage_year_10': [0.1, 0.2, 0.3],
-            'project_name': ['Project A', 'Project B', 'Project C']
-        })
-        with self.assertRaises(TypeError):
-            calculate_top_bottom_projects(df_project, num_projects=2, columns=['project_name'])
+            calculate_top_bottom_projects(self.df_project, self.num_projects, ['invalid_column'])
 
 class TestCreateGroupTable(unittest.TestCase):
     def setUp(self):
@@ -89,35 +85,58 @@ class TestCreateGroupTable(unittest.TestCase):
             create_group_table(self.df_project, 'invalid_group')
 
 class TestCalculateTotalVolumesByYear(unittest.TestCase):
-    def setUp(self):
-        self.df_project = pd.DataFrame({
+
+    def test_empty_dataframe(self):
+        df_project = pd.DataFrame()
+        result = calculate_total_volumes_by_year(df_project)
+        self.assertIsInstance(result, pd.DataFrame)
+        self.assertTrue(result.empty)
+
+    def test_single_project(self):
+        data = {
+            'start_year': [2020],
+            'contract_duration': [3],
+            'offered_volume_year_1': [100],
+            'project_delivery_volume_year_1': [80],
+            'offered_volume_year_2': [120],
+            'project_delivery_volume_year_2': [90],
+            'offered_volume_year_3': [110],
+            'project_delivery_volume_year_3': [70]
+        }
+        df_project = pd.DataFrame(data)
+        result = calculate_total_volumes_by_year(df_project)
+        self.assertEqual(len(result), 3)
+        self.assertEqual(result.loc[0, 'Year'], 2020)
+        self.assertEqual(result.loc[0, 'Total Offered Volume'], 100)
+        self.assertEqual(result.loc[0, 'Overall Project Delivery'], 80)
+        self.assertEqual(result.loc[1, 'Year'], 2021)
+        self.assertEqual(result.loc[1, 'Total Offered Volume'], 120)
+        self.assertEqual(result.loc[1, 'Overall Project Delivery'], 90)
+        self.assertEqual(result.loc[2, 'Year'], 2022)
+        self.assertEqual(result.loc[2, 'Total Offered Volume'], 110)
+        self.assertEqual(result.loc[2, 'Overall Project Delivery'], 70)
+
+    def test_multiple_projects(self):
+        data = {
             'start_year': [2020, 2021],
-            'contract_duration': [2, 3],
-            'offered_volume_year_1': [100, 200],
-            'offered_volume_year_2': [300, 400],
-            'offered_volume_year_3': [0, 500],
-            'overall_project_delivery_year_1': [10, 20],
-            'overall_project_delivery_year_2': [30, 40],
-            'overall_project_delivery_year_3': [0, 50]
-        })
-
-    def test_calculate_total_volumes_by_year(self):
-        total_volumes_by_year = calculate_total_volumes_by_year(self.df_project)
-        self.assertIn('Year', total_volumes_by_year.columns)
-        self.assertIn('Total Offered Volume', total_volumes_by_year.columns)
-        self.assertIn('Overall Project Delivery', total_volumes_by_year.columns)
-        self.assertEqual(total_volumes_by_year.shape[0], 4)  # Total years from 2020 to 2023
-
-    def test_calculate_total_volumes_by_year_values(self):
-        total_volumes_by_year = calculate_total_volumes_by_year(self.df_project)
-        self.assertEqual(total_volumes_by_year.loc[0, 'Total Offered Volume'], 100)  # Year 2020
-        self.assertEqual(total_volumes_by_year.loc[1, 'Total Offered Volume'], 500)  # Year 2021
-        self.assertEqual(total_volumes_by_year.loc[2, 'Total Offered Volume'], 400)  # Year 2022
-        self.assertEqual(total_volumes_by_year.loc[3, 'Total Offered Volume'], 500)  # Year 2023
-        self.assertEqual(total_volumes_by_year.loc[0, 'Overall Project Delivery'], 10)  # Year 2020
-        self.assertEqual(total_volumes_by_year.loc[1, 'Overall Project Delivery'], 50)  # Year 2021
-        self.assertEqual(total_volumes_by_year.loc[2, 'Overall Project Delivery'], 40)  # Year 2022
-        self.assertEqual(total_volumes_by_year.loc[3, 'Overall Project Delivery'], 50)  # Year 2023
+            'contract_duration': [2, 2],
+            'offered_volume_year_1': [100, 120],
+            'project_delivery_volume_year_1': [80, 90],
+            'offered_volume_year_2': [110, 130],
+            'project_delivery_volume_year_2': [70, 60]
+        }
+        df_project = pd.DataFrame(data)
+        result = calculate_total_volumes_by_year(df_project)
+        self.assertEqual(len(result), 3)
+        self.assertEqual(result.loc[0, 'Year'], 2020)
+        self.assertEqual(result.loc[0, 'Total Offered Volume'], 100)
+        self.assertEqual(result.loc[0, 'Overall Project Delivery'], 80)
+        self.assertEqual(result.loc[1, 'Year'], 2021)
+        self.assertEqual(result.loc[1, 'Total Offered Volume'], 230)  # 110 + 120
+        self.assertEqual(result.loc[1, 'Overall Project Delivery'], 160)  # 70 + 90
+        self.assertEqual(result.loc[2, 'Year'], 2022)
+        self.assertEqual(result.loc[2, 'Total Offered Volume'], 130)
+        self.assertEqual(result.loc[2, 'Overall Project Delivery'], 60)
 
 if __name__ == '__main__':
     unittest.main()

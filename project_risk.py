@@ -7,31 +7,30 @@ from utils.io import *
 from utils.risk_calculation import *
 from utils.analysis import *
 import logging
-import numpy as np
 
-RISK_BUCKET_COUNT = 5
 logging.basicConfig(level=logging.INFO)
 
 if __name__ == "__main__":
     try:
-        df_project, df_default_rates, df_recovery_potential = load_and_process_data()
-
-        if valid_project_data(df_project) and check_df_format(df_default_rates, df_recovery_potential):        
+        risk_bucket_count, df_project, df_default_rates, df_recovery_potential = load_and_process_data()
+        
+        if valid_project_data(df_project,risk_bucket_count) and check_df_format(df_default_rates, df_recovery_potential):        
+            
             # Calculate Risk Bucket Risk Scores and Ratings for each risk bucket 
-            df_project = calculate_risk_bucket_scores(df_project)
-            for i in range(1, RISK_BUCKET_COUNT + 1):
+            df_project = calculate_risk_bucket_scores(df_project,risk_bucket_count)        
+            for i in range(1, risk_bucket_count + 1):
                 df_project[f'risk_bucket_{i}_rating'] = score_to_rating_vectorized(df_project[f'risk_bucket_{i}_score'])
             
             # Prepare for the simulation
-            df_project = calculate_yearly_exposure(df_project, df_default_rates, df_recovery_potential, RISK_BUCKET_COUNT)
-            df_project = calculate_yearly_expected_value(df_project)
-            df_project = calculate_yearly_standard_deviation(df_project)
-
+            df_project = calculate_yearly_exposure(df_project, df_default_rates, df_recovery_potential, risk_bucket_count)
+            df_project = calculate_yearly_expected_value(df_project, risk_bucket_count)
+            df_project = calculate_yearly_standard_deviation(df_project,risk_bucket_count)
+        
             # Run the yearly simulations for all projects
-            df_project = run_simulation(df_project)
-            overall_expected_value_percentage = df_project[[f'expected_value_percentage_year_{year}' for year in range(1, 11)]].mean(axis=1, skipna=True) * 10
+            df_project = run_simulation(df_project, risk_bucket_count)
+            overall_expected_value_percentage = df_project[[f'project_expected_value_percentage_year_{year}' for year in range(1, 11)]].mean(axis=1, skipna=True) * 10
             df_project['overall_project_rating'] = score_to_rating_vectorized(overall_expected_value_percentage)
-            
+
             # Calculate Project Output Tables
             df_counts = pd.DataFrame(df_project['overall_project_rating'].value_counts()).reset_index()
             df_counts.columns = ['overall_project_rating', 'counts']

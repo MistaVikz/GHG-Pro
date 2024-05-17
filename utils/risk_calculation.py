@@ -1,12 +1,13 @@
 import pandas as pd
 import numpy as np
 
-def run_simulation(df_project, num_samples=10000):
+def run_simulation(df_project, num_buckets, num_samples=10000):
     """
     Run a simulation to calculate the projected delivery volume and its standard deviation.
 
     Parameters:
     df_project (pandas.DataFrame): A DataFrame containing the expected values and standard deviations for each risk bucket.
+    num_buckets (int): The number of risk buckets.
     num_samples (int): The number of random samples to generate. Default is 10000.
 
     Returns:
@@ -24,37 +25,26 @@ def run_simulation(df_project, num_samples=10000):
 
         # Run the simulation for each year up to the contract duration
         for year in range(contract_duration):
-            risk_bucket_1_exp_val = row[f'risk_bucket_1_expected_value_year_{year+1}']
-            risk_bucket_1_std = row[f'risk_bucket_1_standard_deviation_year_{year+1}']
-            risk_bucket_2_exp_val = row[f'risk_bucket_2_expected_value_year_{year+1}']
-            risk_bucket_2_std = row[f'risk_bucket_2_standard_deviation_year_{year+1}']
-            risk_bucket_3_exp_val = row[f'risk_bucket_3_expected_value_year_{year+1}']
-            risk_bucket_3_std = row[f'risk_bucket_3_standard_deviation_year_{year+1}']
-            risk_bucket_4_exp_val = row[f'risk_bucket_4_expected_value_year_{year+1}']
-            risk_bucket_4_std = row[f'risk_bucket_4_standard_deviation_year_{year+1}']
-            risk_bucket_5_exp_val = row[f'risk_bucket_5_expected_value_year_{year+1}']
-            risk_bucket_5_std = row[f'risk_bucket_5_standard_deviation_year_{year+1}']
-
             # Generate random samples for each input (10000 samples)
-            risk_bucket_1_samples = np.random.normal(loc=risk_bucket_1_exp_val, scale=risk_bucket_1_std, size=num_samples)
-            risk_bucket_2_samples = np.random.normal(loc=risk_bucket_2_exp_val, scale=risk_bucket_2_std, size=num_samples)
-            risk_bucket_3_samples = np.random.normal(loc=risk_bucket_3_exp_val, scale=risk_bucket_3_std, size=num_samples)
-            risk_bucket_4_samples = np.random.normal(loc=risk_bucket_4_exp_val, scale=risk_bucket_4_std, size=num_samples)
-            risk_bucket_5_samples = np.random.normal(loc=risk_bucket_5_exp_val, scale=risk_bucket_5_std, size=num_samples)
+            samples = []
+            for bucket in range(1, num_buckets + 1):
+                exp_val = row[f'risk_bucket_{bucket}_expected_value_year_{year+1}']
+                std = row[f'risk_bucket_{bucket}_standard_deviation_year_{year+1}']
+                samples.append(np.random.normal(loc=exp_val, scale=std, size=num_samples))
 
             # Calculate the projected delivery volume for each set of input samples
-            projected_delivery_volume_samples = risk_bucket_1_samples + risk_bucket_2_samples + risk_bucket_3_samples + risk_bucket_4_samples + risk_bucket_5_samples
+            projected_delivery_volume_samples = np.sum(samples, axis=0)
 
             # Calculate statistics
             std_dev[index, year] = np.std(projected_delivery_volume_samples)
             overall_project_delivery[index, year] = row[f'offered_volume_year_{year+1}'] - (2 * std_dev[index, year])
             expected_value_percentage[index, year] = overall_project_delivery[index, year] / row[f'offered_volume_year_{year+1}']
 
-    # Store the results in the DataFrame
+    # Add the calculated columns to the DataFrame
     for year in range(1, 11):
         df_project[f'project_standard_deviation_year_{year}'] = std_dev[:, year-1]
-        df_project[f'overall_project_delivery_year_{year}'] = overall_project_delivery[:, year-1]
-        df_project[f'expected_value_percentage_year_{year}'] = expected_value_percentage[:, year-1]
+        df_project[f'project_delivery_volume_year_{year}'] = overall_project_delivery[:, year-1]
+        df_project[f'project_expected_value_percentage_year_{year}'] = expected_value_percentage[:, year-1]
 
     return df_project
 

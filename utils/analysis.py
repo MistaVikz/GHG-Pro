@@ -14,8 +14,12 @@ def calculate_top_bottom_projects(df_project, num_projects, columns):
     top_projects (pandas DataFrame): The top projects based on their average expected value.
     bottom_projects (pandas DataFrame): The bottom projects based on their average expected value.
     """
+
+    if num_projects <= 0:
+        raise ValueError('num_projects must be greater than 0')
+    
     # Calculate the mean of expected value percentages for each project
-    expected_value_columns = [f'expected_value_percentage_year_{i}' for i in range(1, 11)]
+    expected_value_columns = [f'project_expected_value_percentage_year_{i}' for i in range(1, 11)]
     average_expected_values = df_project[expected_value_columns].mean(axis=1, skipna=True)
 
     # Select and sort projects by their average expected value
@@ -77,6 +81,9 @@ def calculate_total_volumes_by_year(df_project):
     pandas DataFrame: A DataFrame with the total offered volume and overall project delivery for each calendar year.
     """
 
+    if df_project.empty:
+        return pd.DataFrame(columns=['Year', 'Total Offered Volume', 'Overall Project Delivery'])
+
     end_years = df_project['start_year'] + df_project['contract_duration'] - 1
     
     total_volumes_by_year = pd.DataFrame(index=range(df_project['start_year'].min(), end_years.max() + 1), columns=['Total Offered Volume', 'Overall Project Delivery'])
@@ -86,7 +93,7 @@ def calculate_total_volumes_by_year(df_project):
         for i in range(row['contract_duration']):
             year = row['start_year'] + i
             total_volumes_by_year.loc[year, 'Total Offered Volume'] += row[f'offered_volume_year_{i+1}']
-            total_volumes_by_year.loc[year, 'Overall Project Delivery'] += row[f'overall_project_delivery_year_{i+1}']
+            total_volumes_by_year.loc[year, 'Overall Project Delivery'] += row[f'project_delivery_volume_year_{i+1}']
 
     total_volumes_by_year = total_volumes_by_year.reset_index().rename(columns={'index': 'Year'})
 

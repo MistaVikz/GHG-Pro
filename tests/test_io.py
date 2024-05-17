@@ -6,120 +6,232 @@ from io import StringIO
 
 class TestValidProjectData(unittest.TestCase):
     def setUp(self):
-        # Create a DataFrame with valid data
-        data = {
-            'project_id': [1, 2, 3],
-            'project_name': ['Project 1', 'Project 2', 'Project 3'],
-            'contract_duration': [5, 5, 5],
-            'country': ['Country 1', 'Country 2', 'Country 3'],
-            'technology': ['Tech 1', 'Tech 2', 'Tech 3'],
-            'counterparty': ['Counterparty 1', 'Counterparty 2', 'Counterparty 3'],
-            'start_year': [2000, 2001, 2002],
-            'screening_date': pd.to_datetime(['2022-01-01', '2022-02-01', '2022-03-01']),
-            'offered_volume_year_1': [100, 200, 300],
-            'offered_volume_year_2': [100, 200, 300],
-            'offered_volume_year_3': [100, 200, 300],
-            'offered_volume_year_4': [100, 200, 300],
-            'offered_volume_year_5': [100, 200, 300],
-            'offered_volume_year_6': [100, 200, 300],
-            'offered_volume_year_7': [100, 200, 300],
-            'offered_volume_year_8': [100, 200, 300],
-            'offered_volume_year_9': [100, 200, 300],
-            'offered_volume_year_10': [100, 200, 300],
-            'risk_bucket_1_factor_1': [0.1, 0.2, 0.3],
-            'risk_bucket_1_weight_1': [0.2, 0.2, 0.2],
-            'risk_bucket_1_factor_2': [0.1, 0.2, 0.3],
-            'risk_bucket_1_weight_2': [0.2, 0.2, 0.2],
-            'risk_bucket_1_factor_3': [0.1, 0.2, 0.3],
-            'risk_bucket_1_weight_3': [0.2, 0.2, 0.2],
-            'risk_bucket_1_factor_4': [0.1, 0.2, 0.3],
-            'risk_bucket_1_weight_4': [0.2, 0.2, 0.2],
-            'risk_bucket_1_factor_5': [0.1, 0.2, 0.3],
-            'risk_bucket_1_weight_5': [0.2, 0.2, 0.2],
-            'risk_bucket_2_factor_1': [0.1, 0.2, 0.3],
-            'risk_bucket_2_weight_1': [0.2, 0.2, 0.2],
-            'risk_bucket_2_factor_2': [0.1, 0.2, 0.3],
-            'risk_bucket_2_weight_2': [0.2, 0.2, 0.2],
-            'risk_bucket_2_factor_3': [0.1, 0.2, 0.3],
-            'risk_bucket_2_weight_3': [0.2, 0.2, 0.2],
-            'risk_bucket_2_factor_4': [0.1, 0.2, 0.3],
-            'risk_bucket_2_weight_4': [0.2, 0.2, 0.2],
-            'risk_bucket_2_factor_5': [0.1, 0.2, 0.3],
-            'risk_bucket_2_weight_5': [0.2, 0.2, 0.2],
-            'risk_bucket_3_factor_1': [0.1, 0.2, 0.3],
-            'risk_bucket_3_weight_1': [0.2, 0.2, 0.2],
-            'risk_bucket_3_factor_2': [0.1, 0.2, 0.3],
-            'risk_bucket_3_weight_2': [0.2, 0.2, 0.2],
-            'risk_bucket_3_factor_3': [0.1, 0.2, 0.3],
-            'risk_bucket_3_weight_3': [0.2, 0.2, 0.2],
-            'risk_bucket_3_factor_4': [0.1, 0.2, 0.3],
-            'risk_bucket_3_weight_4': [0.2, 0.2, 0.2],
-            'risk_bucket_3_factor_5': [0.1, 0.2, 0.3],
-            'risk_bucket_3_weight_5': [0.2, 0.2, 0.2],
-            'risk_bucket_4_factor_1': [0.1, 0.2, 0.3],
-            'risk_bucket_4_weight_1': [0.2, 0.2, 0.2],
-            'risk_bucket_4_factor_2': [0.1, 0.2, 0.3],
-            'risk_bucket_4_weight_2': [0.2, 0.2, 0.2],
-            'risk_bucket_4_factor_3': [0.1, 0.2, 0.3],
-            'risk_bucket_4_weight_3': [0.2, 0.2, 0.2],
-            'risk_bucket_4_factor_4': [0.1, 0.2, 0.3],
-            'risk_bucket_4_weight_4': [0.2, 0.2, 0.2],
-            'risk_bucket_4_factor_5': [0.1, 0.2, 0.3],
-            'risk_bucket_4_weight_5': [0.2, 0.2, 0.2],
-            'risk_bucket_5_factor_1': [0.1, 0.2, 0.3],
-            'risk_bucket_5_weight_1': [0.2, 0.2, 0.2],
-            'risk_bucket_5_factor_2': [0.1, 0.2, 0.3],
-            'risk_bucket_5_weight_2': [0.2, 0.2, 0.2],
-            'risk_bucket_5_factor_3': [0.1, 0.2, 0.3],
-            'risk_bucket_5_weight_3': [0.2, 0.2, 0.2],
-            'risk_bucket_5_factor_4': [0.1, 0.2, 0.3],
-            'risk_bucket_5_weight_4': [0.2, 0.2, 0.2],
-            'risk_bucket_5_factor_5': [0.1, 0.2, 0.3],
-            'risk_bucket_5_weight_5': [0.2, 0.2, 0.2]
-        }
-        self.df = pd.DataFrame(data)
+        self.num_buckets = 3
+        self.required_columns = ['project_id', 'project_name', 'contract_duration', 'country', 'technology', 'counterparty', 'start_year', 'screening_date']
+        for year in range(1, 11):
+            self.required_columns.append(f'offered_volume_year_{year}')
+        for bucket in range(1, self.num_buckets + 1):
+            for factor in range(1, 6):
+                self.required_columns.append(f'risk_bucket_{bucket}_factor_{factor}')
+                self.required_columns.append(f'risk_bucket_{bucket}_weight_{factor}')
 
     @patch('sys.stdout', new_callable=StringIO)
-    def test_valid_project_data(self, mock_stdout):
-        self.assertTrue(valid_project_data(self.df))
-        output = mock_stdout.getvalue()
-        self.assertEqual(output, "")
+    def test_valid_data(self, mock_stdout):
+        data = {
+            'project_id': [1],
+            'project_name': ['Name'],
+            'contract_duration': [5],
+            'country': ['Country'],
+            'technology': ['Tech'],
+            'counterparty': ['Counter'],
+            'start_year': [2000],
+            'screening_date': [pd.to_datetime('2022-01-01')]
+        }
+        for year in range(1, 11):
+            data[f'offered_volume_year_{year}'] = [100]
+        for bucket in range(1, self.num_buckets + 1):
+            for factor in range(1, 6):
+                data[f'risk_bucket_{bucket}_factor_{factor}'] = [1]
+                data[f'risk_bucket_{bucket}_weight_{factor}'] = [0.2]
+
+        df = pd.DataFrame(data)
+        self.assertTrue(valid_project_data(df, self.num_buckets))
 
     @patch('sys.stdout', new_callable=StringIO)
     def test_missing_column(self, mock_stdout):
-        df = self.df.drop('project_id', axis=1)
-        self.assertFalse(valid_project_data(df))
-        output = mock_stdout.getvalue()
-        self.assertIn("Error: Not all required columns are present.", output)
+        data = {
+            'project_id': [1],
+            'project_name': ['Name'],
+            'contract_duration': [5],
+            'country': ['Country'],
+            'technology': ['Tech'],
+            'counterparty': ['Counter'],
+            'start_year': [2000],
+            'screening_date': [pd.to_datetime('2022-01-01')]
+        }
+        df = pd.DataFrame(data)
+        self.assertFalse(valid_project_data(df, self.num_buckets))
+
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_null_project_id(self, mock_stdout):
+        data = {
+            'project_id': [None],
+            'project_name': ['Name'],
+            'contract_duration': [5],
+            'country': ['Country'],
+            'technology': ['Tech'],
+            'counterparty': ['Counter'],
+            'start_year': [2000],
+            'screening_date': [pd.to_datetime('2022-01-01')]
+        }
+        for year in range(1, 11):
+            data[f'offered_volume_year_{year}'] = [100]
+        for bucket in range(1, self.num_buckets + 1):
+            for factor in range(1, 6):
+                data[f'risk_bucket_{bucket}_factor_{factor}'] = [1]
+                data[f'risk_bucket_{bucket}_weight_{factor}'] = [0.2]
+
+        df = pd.DataFrame(data)
+        self.assertFalse(valid_project_data(df, self.num_buckets))
+
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_duplicate_project_id(self, mock_stdout):
+        data = {
+            'project_id': [1, 1],
+            'project_name': ['Name', 'Name'],
+            'contract_duration': [5, 5],
+            'country': ['Country', 'Country'],
+            'technology': ['Tech', 'Tech'],
+            'counterparty': ['Counter', 'Counter'],
+            'start_year': [2000, 2000],
+            'screening_date': [pd.to_datetime('2022-01-01'), pd.to_datetime('2022-01-01')]
+        }
+        for year in range(1, 11):
+            data[f'offered_volume_year_{year}'] = [100, 100]
+        for bucket in range(1, self.num_buckets + 1):
+            for factor in range(1, 6):
+                data[f'risk_bucket_{bucket}_factor_{factor}'] = [1, 1]
+                data[f'risk_bucket_{bucket}_weight_{factor}'] = [0.2, 0.2]
+
+        df = pd.DataFrame(data)
+        self.assertFalse(valid_project_data(df, self.num_buckets))
 
     @patch('sys.stdout', new_callable=StringIO)
     def test_invalid_contract_duration(self, mock_stdout):
-        self.df['contract_duration'] = ['5 years', '5 years', '5 years']
-        self.assertFalse(valid_project_data(self.df))
-        output = mock_stdout.getvalue()
-        self.assertIn("Error: Contract Duration column contains invalid values. Values must be integers between 1 and 10.", output)
+        data = {
+            'project_id': [1],
+            'project_name': ['Name'],
+            'contract_duration': [15],
+            'country': ['Country'],
+            'technology': ['Tech'],
+            'counterparty': ['Counter'],
+            'start_year': [2000],
+            'screening_date': [pd.to_datetime('2022-01-01')]
+        }
+        for year in range(1, 11):
+            data[f'offered_volume_year_{year}'] = [100]
+        for bucket in range(1, self.num_buckets + 1):
+            for factor in range(1, 6):
+                data[f'risk_bucket_{bucket}_factor_{factor}'] = [1]
+                data[f'risk_bucket_{bucket}_weight_{factor}'] = [0.2]
+
+        df = pd.DataFrame(data)
+        self.assertFalse(valid_project_data(df, self.num_buckets))
 
     @patch('sys.stdout', new_callable=StringIO)
     def test_invalid_start_year(self, mock_stdout):
-        self.df['start_year'] = [1999, 2001, 2002]
-        self.assertFalse(valid_project_data(self.df))
-        output = mock_stdout.getvalue()
-        self.assertIn("Error: Start Year column contains invalid values. Values must be integers greater or equal to 2000.", output)
+        data = {
+            'project_id': [1],
+            'project_name': ['Name'],
+            'contract_duration': [5],
+            'country': ['Country'],
+            'technology': ['Tech'],
+            'counterparty': ['Counter'],
+            'start_year': [1999],
+            'screening_date': [pd.to_datetime('2022-01-01')]
+        }
+        for year in range(1, 11):
+            data[f'offered_volume_year_{year}'] = [100]
+        for bucket in range(1, self.num_buckets + 1):
+            for factor in range(1, 6):
+                data[f'risk_bucket_{bucket}_factor_{factor}'] = [1]
+                data[f'risk_bucket_{bucket}_weight_{factor}'] = [0.2]
+
+        df = pd.DataFrame(data)
+        self.assertFalse(valid_project_data(df, self.num_buckets))
 
     @patch('sys.stdout', new_callable=StringIO)
     def test_invalid_offered_volume(self, mock_stdout):
-        self.df['offered_volume_year_1'] = [-100, 200, 300]
-        self.assertFalse(valid_project_data(self.df))
-        output = mock_stdout.getvalue()
-        self.assertIn("Error: offered_volume_year_1 column contains invalid values. Values must be integers greater than 0.", output)
+        data = {
+            'project_id': [1],
+            'project_name': ['Name'],
+            'contract_duration': [5],
+            'country': ['Country'],
+            'technology': ['Tech'],
+            'counterparty': ['Counter'],
+            'start_year': [2000],
+            'screening_date': [pd.to_datetime('2022-01-01')]
+        }
+        for year in range(1, 11):
+            data[f'offered_volume_year_{year}'] = [0]
+        for bucket in range(1, self.num_buckets + 1):
+            for factor in range(1, 6):
+                data[f'risk_bucket_{bucket}_factor_{factor}'] = [1]
+                data[f'risk_bucket_{bucket}_weight_{factor}'] = [0.2]
+
+        df = pd.DataFrame(data)
+        self.assertFalse(valid_project_data(df, self.num_buckets))
 
     @patch('sys.stdout', new_callable=StringIO)
-    def test_invalid_risk_bucket_weights(self, mock_stdout):
-        self.df['risk_bucket_1_weight_1'] = [0.1, 0.2, 0.3]
-        self.assertFalse(valid_project_data(self.df))
-        output = mock_stdout.getvalue()
-        self.assertIn("Error: risk_bucket_1_weight_1 + risk_bucket_1_weight_2 + risk_bucket_1_weight_3 + risk_bucket_1_weight_4 + risk_bucket_1_weight_5 must be equal to 1.", output)
+    def test_invalid_screening_date(self, mock_stdout):
+        data = {
+            'project_id': [1],
+            'project_name': ['Name'],
+            'contract_duration': [5],
+            'country': ['Country'],
+            'technology': ['Tech'],
+            'counterparty': ['Counter'],
+            'start_year': [2000],
+            'screening_date': ['Invalid Date']
+        }
+        for year in range(1, 11):
+            data[f'offered_volume_year_{year}'] = [100]
+        for bucket in range(1, self.num_buckets + 1):
+            for factor in range(1, 6):
+                data[f'risk_bucket_{bucket}_factor_{factor}'] = [1]
+                data[f'risk_bucket_{bucket}_weight_{factor}'] = [0.2]
 
+        df = pd.DataFrame(data)
+        self.assertFalse(valid_project_data(df, self.num_buckets))
+
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_invalid_string_columns(self, mock_stdout):
+        data = {
+            'project_id': [1],
+            'project_name': [1],
+            'contract_duration': [5],
+            'country': ['Country'],
+            'technology': ['Tech'],
+            'counterparty': ['Counter'],
+            'start_year': [2000],
+            'screening_date': [pd.to_datetime('2022-01-01')]
+        }
+        for year in range(1, 11):
+            data[f'offered_volume_year_{year}'] = [100]
+        for bucket in range(1, self.num_buckets + 1):
+            for factor in range(1, 6):
+                data[f'risk_bucket_{bucket}_factor_{factor}'] = [1]
+                data[f'risk_bucket_{bucket}_weight_{factor}'] = [0.2]
+
+        df = pd.DataFrame(data)
+        self.assertFalse(valid_project_data(df, self.num_buckets))
+
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_risk_bucket_weights_sum(self, mock_stdout):
+        data = {
+            'project_id': [1],
+            'project_name': ['Name'],
+            'contract_duration': [5],
+            'country': ['Country'],
+            'technology': ['Tech'],
+            'counterparty': ['Counter'],
+            'start_year': [2000],
+            'screening_date': [pd.to_datetime('2022-01-01')]
+        }
+        for year in range(1, 11):
+            data[f'offered_volume_year_{year}'] = [100]
+        for bucket in range(1, self.num_buckets + 1):
+            for factor in range(1, 6):
+                data[f'risk_bucket_{bucket}_factor_{factor}'] = [1]
+                if factor == 1:
+                    data[f'risk_bucket_{bucket}_weight_{factor}'] = [0.9]  # Set weight to 0.9 instead of 1
+                else:
+                    data[f'risk_bucket_{bucket}_weight_{factor}'] = [0]
+
+        df = pd.DataFrame(data)
+        self.assertFalse(valid_project_data(df, self.num_buckets))
+
+    
 class TestDisplayProjectRiskOutput(unittest.TestCase):
     def setUp(self):
         self.df_counts = pd.DataFrame({'Rating': ['A', 'B', 'C'], 'Count': [10, 20, 30]})

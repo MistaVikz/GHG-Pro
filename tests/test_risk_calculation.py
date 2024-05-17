@@ -130,19 +130,19 @@ class TestRunSimulation(unittest.TestCase):
         })
     
     def test_run_simulation(self):
-        df_result = run_simulation(self.df_project)
+        df_result = run_simulation(self.df_project, 5)
         
         # Check that the values in the result are reasonable
         for i in range(1, 11):
             self.assertGreater(df_result[f'project_standard_deviation_year_{i}'].values[0], 0)
-            self.assertGreater(df_result[f'overall_project_delivery_year_{i}'].values[0], 0)
-            self.assertGreater(df_result[f'expected_value_percentage_year_{i}'].values[0], 0)
+            self.assertGreater(df_result[f'project_delivery_volume_year_{i}'].values[0], 0)
+            self.assertGreater(df_result[f'project_expected_value_percentage_year_{i}'].values[0], 0)
 
         # Check that the values for years 6-10 are NaN for the second project
         for i in range(6, 11):
             self.assertTrue(np.isnan(df_result[f'project_standard_deviation_year_{i}'].values[1]))
-            self.assertTrue(np.isnan(df_result[f'overall_project_delivery_year_{i}'].values[1]))
-            self.assertTrue(np.isnan(df_result[f'expected_value_percentage_year_{i}'].values[1]))
+            self.assertTrue(np.isnan(df_result[f'project_delivery_volume_year_{i}'].values[1]))
+            self.assertTrue(np.isnan(df_result[f'project_expected_value_percentage_year_{i}'].values[1]))
 
     def test_run_simulation_invalid_input(self):
         # Drop a required column from the DataFrame
@@ -150,7 +150,7 @@ class TestRunSimulation(unittest.TestCase):
 
         # Run the simulation and check that it raises a KeyError
         with self.assertRaises(KeyError):
-            run_simulation(df_project)
+            run_simulation(df_project, 5)
 
     def test_zero_standard_deviation(self):
         # Set the standard deviations to zero
@@ -161,12 +161,12 @@ class TestRunSimulation(unittest.TestCase):
         self.df_project['risk_bucket_5_standard_deviation_year_1'] = 0
 
         # Run the simulation
-        result_df = run_simulation(self.df_project)
+        result_df = run_simulation(self.df_project, 5)
 
         # Check that the results are as expected
         self.assertTrue((result_df['project_standard_deviation_year_1'] == 0).all())
-        self.assertTrue((result_df['overall_project_delivery_year_1'] == result_df['offered_volume_year_1']).all())
-        self.assertTrue((result_df['expected_value_percentage_year_1'] == 1).all())
+        self.assertTrue((result_df['project_delivery_volume_year_1'] == result_df['offered_volume_year_1']).all())
+        self.assertTrue((result_df['project_expected_value_percentage_year_1'] == 1).all())
     
     def test_large_dataframe_performance(self):
         # Create a large DataFrame
@@ -174,7 +174,7 @@ class TestRunSimulation(unittest.TestCase):
 
         # Measure the time it takes to run the simulation
         start_time = time.time()
-        result_df = run_simulation(large_df)
+        result_df = run_simulation(large_df, 5)
         end_time = time.time()
     
         # Check that the simulation completed within a reasonable amount of time
@@ -186,7 +186,7 @@ class TestRunSimulation(unittest.TestCase):
 
         # Measure the time it takes to run the simulation
         start_time = time.time()
-        result_df = run_simulation(self.df_project, num_samples)
+        result_df = run_simulation(self.df_project, 5, num_samples)
         end_time = time.time()
 
         # Check that the simulation completed within a reasonable amount of time
