@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-def run_simulation(df_project, num_buckets, num_samples=10000):
+def run_simulation(df_project, num_buckets, num_samples=10000, num_years=10):
     """
     Run a simulation to calculate the projected delivery volume and its standard deviation.
 
@@ -9,15 +9,16 @@ def run_simulation(df_project, num_buckets, num_samples=10000):
     df_project (pandas.DataFrame): A DataFrame containing the expected values and standard deviations for each risk bucket.
     num_buckets (int): The number of risk buckets.
     num_samples (int): The number of random samples to generate. Default is 10000.
+    num_years (int): The number of years for which the simulation is run. Default is 10.
 
     Returns:
-    df_project (pandas.DataFrame): The input DataFrame with additional columns: 'project_standard_deviation_year_i' for i in range(1,11).
+    df_project (pandas.DataFrame): The input DataFrame with additional columns: 'project_standard_deviation_year_i' for i in range(1,num_years+1).
     """
 
     # Initialize the results arrays to NaN
-    std_dev = np.full((len(df_project), 10), np.nan)
-    overall_project_delivery = np.full((len(df_project), 10), np.nan)
-    expected_value_percentage = np.full((len(df_project), 10), np.nan)
+    std_dev = np.full((len(df_project), num_years), np.nan)
+    overall_project_delivery = np.full((len(df_project), num_years), np.nan)
+    expected_value_percentage = np.full((len(df_project), num_years), np.nan)
 
     # Iterate over each row in the DataFrame
     for index, row in df_project.iterrows():
@@ -37,16 +38,17 @@ def run_simulation(df_project, num_buckets, num_samples=10000):
 
             # Calculate statistics
             std_dev[index, year] = np.std(projected_delivery_volume_samples)
-            overall_project_delivery[index, year] = row[f'offered_volume_year_{year+1}'] - (2 * std_dev[index, year])
+            overall_project_delivery[index, year] = max(0, row[f'offered_volume_year_{year+1}'] - (2 * std_dev[index, year]))
             expected_value_percentage[index, year] = overall_project_delivery[index, year] / row[f'offered_volume_year_{year+1}']
 
     # Add the calculated columns to the DataFrame
-    for year in range(1, 11):
+    for year in range(1, num_years+1):
         df_project[f'project_standard_deviation_year_{year}'] = std_dev[:, year-1]
         df_project[f'project_delivery_volume_year_{year}'] = overall_project_delivery[:, year-1]
         df_project[f'project_expected_value_percentage_year_{year}'] = expected_value_percentage[:, year-1]
 
     return df_project
+
 
 
 def calculate_risk_bucket_scores(df_project, num_buckets=5, num_factors=5):
@@ -69,6 +71,10 @@ def calculate_risk_bucket_scores(df_project, num_buckets=5, num_factors=5):
         factors = [f'risk_bucket_{bucket}_factor_{i}' for i in range(1, num_factors+1)]
         weights = [f'risk_bucket_{bucket}_weight_{i}' for i in range(1, num_factors+1)]
         df_project[f'risk_bucket_{bucket}_score'] = sum(df_project[factor] * df_project[weight] for factor, weight in zip(factors, weights))
+        
+        # Ensure scores are between 0 and 10
+        df_project[f'risk_bucket_{bucket}_score'] = df_project[f'risk_bucket_{bucket}_score'].apply(lambda x: max(0, min(x, 10)))
+    
     return df_project
 
 def score_to_rating_vectorized(scores):
@@ -81,13 +87,16 @@ def score_to_rating_vectorized(scores):
     Returns:
     pandas.Series: A series of project ratings, which can be 'Investment', 'Speculative', or 'C'.
     """
+    if scores.isnull().any():
+        raise ValueError("Scores cannot contain NaN values")
+
     if not ((scores >= 0) & (scores <= 10)).all():
         raise ValueError("All scores must be between 0 and 10")
 
     ratings = pd.cut(scores, bins=[-1, 3.5, 7.5, 10], labels=['C', 'Speculative', 'Investment'], include_lowest=True)
     return ratings
     
-def calculate_yearly_exposure(df_project, df_default_rates, df_recovery_potential, risk_bucket_count):
+def calculate_yearly_exposure(df_project, df_default_rates, df_recovery_potential, risk_bucket_count, num_years=10):
     """
     Calculate the exposure for each year and risk bucket.
 
@@ -96,6 +105,7 @@ def calculate_yearly_exposure(df_project, df_default_rates, df_recovery_potentia
     df_default_rates (DataFrame): The DataFrame containing the default rates.
     df_recovery_potential (DataFrame): The DataFrame containing the recovery potentials.
     risk_bucket_count: The number of risk buckets.
+    num_years (int, optional): The number of years. Defaults to 10.
 
     Returns:
     The DataFrame with the calculated exposures.
@@ -103,9 +113,9 @@ def calculate_yearly_exposure(df_project, df_default_rates, df_recovery_potentia
     exposures = pd.DataFrame(index=df_project.index)
     
     for j in range(1, risk_bucket_count + 1):
-        for i in range(1, 11):
+        for i in range(1, num_years + 1):
             # Calculate the exposure for this year and risk bucket
-            exposures[f'risk_bucket_{j}_exposure_year_{i}'] = df_project.apply(lambda row: (df_default_rates.loc[row[f'risk_bucket_{j}_rating'], min(i, row['contract_duration'])] * (1 - df_recovery_potential.loc[row[f'risk_bucket_{j}_rating'], min(i, row['contract_duration'])])) / 100 if i <= row['contract_duration'] else np.nan, axis=1)
+            exposures[f'risk_bucket_{j}_exposure_year_{i}'] = df_project.apply(lambda row: np.clip((df_default_rates.loc[row[f'risk_bucket_{j}_rating'], min(i, row['contract_duration'])] * (1 - df_recovery_potential.loc[row[f'risk_bucket_{j}_rating'], min(i, row['contract_duration'])])) / 100, 0, 1) if i <= row['contract_duration'] else np.nan, axis=1)
     
     df_project = pd.concat([df_project, exposures], axis=1)
     
