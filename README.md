@@ -32,20 +32,17 @@ Note: Make sure you have Python [3.0] or higher installed on your system.
 ### Usage
 
 To run the GHG Risk Evaluation project, navigate to the main directory and execute the `project_risk.py` file using Python:
-python project_risk.py
+`python project_risk.py`
 
 This will read in the data and perform the analysis.
-
-Here is the updated section of your README.md:
 
 If you want to generate sample data for testing purposes, you can use the `generate_project_risk_data.py` script located in the scripts directory. To generate sample data, run the following command:
 `python scripts/generate_project_risk_data.py`
 
-By default, this script will generate 100 test projects with 5 risk buckets. You can specify the number of test projects and risk buckets to generate by passing optional command line arguments, like this:
-`python scripts/generate_project_risk_data.py -p 10 -b 3`
+By default, this script will generate 100 test projects with 5 risk buckets and 5 risk factors. You can specify the number of test projects, risk buckets, and risk factors to generate by passing optional command line arguments, like this:
+`python scripts/generate_project_risk_data.py -p 10 -b 3 -f 4`
 
-Replace 10 with the desired number of test projects and 3 with the desired number of risk buckets. The number of test projects must be an integer between 1 and 1000, and the number of risk buckets must be an integer between 1 and 10.
-
+Replace 10 with the desired number of test projects, 3 with the desired number of risk buckets, and 4 with the desired number of risk factors. The number of test projects must be an integer between 0 and 1000, the number of risk buckets must be an integer between 1 and 10, and the number of risk factors must be an integer between 1 and 10.
 Note: Make sure you have the required dependencies installed (see the Requirements section above) before running the project.
 
 ### Methodology

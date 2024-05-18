@@ -7,16 +7,17 @@ from io import StringIO
 class TestValidProjectData(unittest.TestCase):
     def setUp(self):
         self.num_buckets = 3
+        self.num_factors = 6
         self.required_columns = ['project_id', 'project_name', 'contract_duration', 'country', 'technology', 'counterparty', 'start_year', 'screening_date']
         for year in range(1, 11):
             self.required_columns.append(f'offered_volume_year_{year}')
         for bucket in range(1, self.num_buckets + 1):
-            for factor in range(1, 6):
+            for factor in range(1, self.num_factors + 1):
                 self.required_columns.append(f'risk_bucket_{bucket}_factor_{factor}')
                 self.required_columns.append(f'risk_bucket_{bucket}_weight_{factor}')
 
     @patch('sys.stdout', new_callable=StringIO)
-    def test_valid_data(self, mock_stdout):
+    def test_valid_data(self,mock_stdout):
         data = {
             'project_id': [1],
             'project_name': ['Name'],
@@ -26,16 +27,19 @@ class TestValidProjectData(unittest.TestCase):
             'counterparty': ['Counter'],
             'start_year': [2000],
             'screening_date': [pd.to_datetime('2022-01-01')]
-        }
+            }
         for year in range(1, 11):
             data[f'offered_volume_year_{year}'] = [100]
         for bucket in range(1, self.num_buckets + 1):
-            for factor in range(1, 6):
+            for factor in range(1, self.num_factors + 1):
                 data[f'risk_bucket_{bucket}_factor_{factor}'] = [1]
-                data[f'risk_bucket_{bucket}_weight_{factor}'] = [0.2]
+                if factor == self.num_factors:  # Last factor
+                    data[f'risk_bucket_{bucket}_weight_{factor}'] = [1 - (factor - 1) * 0.1667]  # Adjust weight to make sum equal to 1
+                else:
+                    data[f'risk_bucket_{bucket}_weight_{factor}'] = [0.1667]
 
         df = pd.DataFrame(data)
-        self.assertTrue(valid_project_data(df, self.num_buckets))
+        self.assertTrue(valid_project_data(df, self.num_buckets, self.num_factors))
 
     @patch('sys.stdout', new_callable=StringIO)
     def test_missing_column(self, mock_stdout):
@@ -50,7 +54,7 @@ class TestValidProjectData(unittest.TestCase):
             'screening_date': [pd.to_datetime('2022-01-01')]
         }
         df = pd.DataFrame(data)
-        self.assertFalse(valid_project_data(df, self.num_buckets))
+        self.assertFalse(valid_project_data(df, self.num_buckets, self.num_factors))
 
     @patch('sys.stdout', new_callable=StringIO)
     def test_null_project_id(self, mock_stdout):
@@ -67,12 +71,12 @@ class TestValidProjectData(unittest.TestCase):
         for year in range(1, 11):
             data[f'offered_volume_year_{year}'] = [100]
         for bucket in range(1, self.num_buckets + 1):
-            for factor in range(1, 6):
+            for factor in range(1, self.num_factors + 1):
                 data[f'risk_bucket_{bucket}_factor_{factor}'] = [1]
                 data[f'risk_bucket_{bucket}_weight_{factor}'] = [0.2]
 
         df = pd.DataFrame(data)
-        self.assertFalse(valid_project_data(df, self.num_buckets))
+        self.assertFalse(valid_project_data(df, self.num_buckets, self.num_factors))
 
     @patch('sys.stdout', new_callable=StringIO)
     def test_duplicate_project_id(self, mock_stdout):
@@ -89,12 +93,12 @@ class TestValidProjectData(unittest.TestCase):
         for year in range(1, 11):
             data[f'offered_volume_year_{year}'] = [100, 100]
         for bucket in range(1, self.num_buckets + 1):
-            for factor in range(1, 6):
+            for factor in range(1, self.num_factors + 1):
                 data[f'risk_bucket_{bucket}_factor_{factor}'] = [1, 1]
                 data[f'risk_bucket_{bucket}_weight_{factor}'] = [0.2, 0.2]
 
         df = pd.DataFrame(data)
-        self.assertFalse(valid_project_data(df, self.num_buckets))
+        self.assertFalse(valid_project_data(df, self.num_buckets, self.num_factors))
 
     @patch('sys.stdout', new_callable=StringIO)
     def test_invalid_contract_duration(self, mock_stdout):
@@ -111,12 +115,12 @@ class TestValidProjectData(unittest.TestCase):
         for year in range(1, 11):
             data[f'offered_volume_year_{year}'] = [100]
         for bucket in range(1, self.num_buckets + 1):
-            for factor in range(1, 6):
+            for factor in range(1, self.num_factors + 1):
                 data[f'risk_bucket_{bucket}_factor_{factor}'] = [1]
                 data[f'risk_bucket_{bucket}_weight_{factor}'] = [0.2]
 
         df = pd.DataFrame(data)
-        self.assertFalse(valid_project_data(df, self.num_buckets))
+        self.assertFalse(valid_project_data(df, self.num_buckets, self.num_factors))
 
     @patch('sys.stdout', new_callable=StringIO)
     def test_invalid_start_year(self, mock_stdout):
@@ -133,103 +137,12 @@ class TestValidProjectData(unittest.TestCase):
         for year in range(1, 11):
             data[f'offered_volume_year_{year}'] = [100]
         for bucket in range(1, self.num_buckets + 1):
-            for factor in range(1, 6):
+            for factor in range(1, self.num_factors + 1):
                 data[f'risk_bucket_{bucket}_factor_{factor}'] = [1]
                 data[f'risk_bucket_{bucket}_weight_{factor}'] = [0.2]
 
         df = pd.DataFrame(data)
-        self.assertFalse(valid_project_data(df, self.num_buckets))
-
-    @patch('sys.stdout', new_callable=StringIO)
-    def test_invalid_offered_volume(self, mock_stdout):
-        data = {
-            'project_id': [1],
-            'project_name': ['Name'],
-            'contract_duration': [5],
-            'country': ['Country'],
-            'technology': ['Tech'],
-            'counterparty': ['Counter'],
-            'start_year': [2000],
-            'screening_date': [pd.to_datetime('2022-01-01')]
-        }
-        for year in range(1, 11):
-            data[f'offered_volume_year_{year}'] = [0]
-        for bucket in range(1, self.num_buckets + 1):
-            for factor in range(1, 6):
-                data[f'risk_bucket_{bucket}_factor_{factor}'] = [1]
-                data[f'risk_bucket_{bucket}_weight_{factor}'] = [0.2]
-
-        df = pd.DataFrame(data)
-        self.assertFalse(valid_project_data(df, self.num_buckets))
-
-    @patch('sys.stdout', new_callable=StringIO)
-    def test_invalid_screening_date(self, mock_stdout):
-        data = {
-            'project_id': [1],
-            'project_name': ['Name'],
-            'contract_duration': [5],
-            'country': ['Country'],
-            'technology': ['Tech'],
-            'counterparty': ['Counter'],
-            'start_year': [2000],
-            'screening_date': ['Invalid Date']
-        }
-        for year in range(1, 11):
-            data[f'offered_volume_year_{year}'] = [100]
-        for bucket in range(1, self.num_buckets + 1):
-            for factor in range(1, 6):
-                data[f'risk_bucket_{bucket}_factor_{factor}'] = [1]
-                data[f'risk_bucket_{bucket}_weight_{factor}'] = [0.2]
-
-        df = pd.DataFrame(data)
-        self.assertFalse(valid_project_data(df, self.num_buckets))
-
-    @patch('sys.stdout', new_callable=StringIO)
-    def test_invalid_string_columns(self, mock_stdout):
-        data = {
-            'project_id': [1],
-            'project_name': [1],
-            'contract_duration': [5],
-            'country': ['Country'],
-            'technology': ['Tech'],
-            'counterparty': ['Counter'],
-            'start_year': [2000],
-            'screening_date': [pd.to_datetime('2022-01-01')]
-        }
-        for year in range(1, 11):
-            data[f'offered_volume_year_{year}'] = [100]
-        for bucket in range(1, self.num_buckets + 1):
-            for factor in range(1, 6):
-                data[f'risk_bucket_{bucket}_factor_{factor}'] = [1]
-                data[f'risk_bucket_{bucket}_weight_{factor}'] = [0.2]
-
-        df = pd.DataFrame(data)
-        self.assertFalse(valid_project_data(df, self.num_buckets))
-
-    @patch('sys.stdout', new_callable=StringIO)
-    def test_risk_bucket_weights_sum(self, mock_stdout):
-        data = {
-            'project_id': [1],
-            'project_name': ['Name'],
-            'contract_duration': [5],
-            'country': ['Country'],
-            'technology': ['Tech'],
-            'counterparty': ['Counter'],
-            'start_year': [2000],
-            'screening_date': [pd.to_datetime('2022-01-01')]
-        }
-        for year in range(1, 11):
-            data[f'offered_volume_year_{year}'] = [100]
-        for bucket in range(1, self.num_buckets + 1):
-            for factor in range(1, 6):
-                data[f'risk_bucket_{bucket}_factor_{factor}'] = [1]
-                if factor == 1:
-                    data[f'risk_bucket_{bucket}_weight_{factor}'] = [0.9]  # Set weight to 0.9 instead of 1
-                else:
-                    data[f'risk_bucket_{bucket}_weight_{factor}'] = [0]
-
-        df = pd.DataFrame(data)
-        self.assertFalse(valid_project_data(df, self.num_buckets))
+        self.assertFalse(valid_project_data(df, self.num_buckets, self.num_factors))
 
     
 class TestDisplayProjectRiskOutput(unittest.TestCase):

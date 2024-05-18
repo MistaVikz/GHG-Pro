@@ -1,6 +1,7 @@
 import sys
 import os
 import pandas as pd
+import numpy as np
 import datetime
 from openpyxl import Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
@@ -12,6 +13,7 @@ def load_and_process_data():
 
     Returns:
     num_buckets (int): The number of risk buckets.
+    num_risk_factors (int): The number of risk factors.
     df_project (pandas.DataFrame): A DataFrame containing project data.
     df_default_rates (pandas.DataFrame): A DataFrame containing default rates data.
     df_recovery_potential (pandas.DataFrame): A DataFrame containing recovery potential data.
@@ -46,7 +48,10 @@ def load_and_process_data():
     # Calculate the number of risk buckets
     num_buckets = max(int(col.split('_')[2]) for col in df_project.columns if 'risk_bucket' in col)
 
-    return num_buckets, df_project, df_default_rates, df_recovery_potential
+    # Calculate the number of risk factors
+    num_risk_factors = len([col for col in df_project.columns if 'factor' in col and f"risk_bucket_1_factor" in col])
+
+    return num_buckets, num_risk_factors, df_project, df_default_rates, df_recovery_potential
 
 def create_output_folder():
     """
@@ -270,13 +275,14 @@ def export_project_risk_output(output_folder, top_projects, bottom_projects, cou
     date_time = now.strftime("%Y%m%d_%H%M%S")
     wb.save(f"{output_folder}/Project_Risk_Summary_Data_{date_time}.xlsx")
 
-def valid_project_data(df: pd.DataFrame, num_buckets: int) -> bool:
+def valid_project_data(df: pd.DataFrame, num_buckets: int, num_factors: int) -> bool:
     """
     Validates the data in the project DataFrame.
 
     Parameters:
         df (pd.DataFrame): The project DataFrame to validate.
         num_buckets (int): The number of risk buckets.
+        num_factors (int): The number of risk factors.
 
     Returns:
         bool: True if the data is valid, False otherwise.
@@ -286,7 +292,7 @@ def valid_project_data(df: pd.DataFrame, num_buckets: int) -> bool:
     for year in range(1, 11):
         required_columns.append(f'offered_volume_year_{year}')
     for bucket in range(1, num_buckets + 1):
-        for factor in range(1, 6):
+        for factor in range(1, num_factors + 1):
             required_columns.append(f'risk_bucket_{bucket}_factor_{factor}')
             required_columns.append(f'risk_bucket_{bucket}_weight_{factor}')
 
@@ -327,11 +333,10 @@ def valid_project_data(df: pd.DataFrame, num_buckets: int) -> bool:
             print(f"Error: {column} column contains invalid values. Values must be strings.")
             return False
 
-    # Check if risk bucket weights sum to 1
     for bucket in range(1, num_buckets + 1):
-        weight_columns = [f'risk_bucket_{bucket}_weight_{factor}' for factor in range(1, 6)]
-        if (df[weight_columns].sum(axis=1) != 1).any():
-            print(f"Error: risk_bucket_{bucket}_weight_1 + risk_bucket_{bucket}_weight_2 + risk_bucket_{bucket}_weight_3 + risk_bucket_{bucket}_weight_4 + risk_bucket_{bucket}_weight_5 must be equal to 1.")
+        weight_columns = [f'risk_bucket_{bucket}_weight_{factor}' for factor in range(1, num_factors + 1)]
+        if not np.all(np.round(df[weight_columns].sum(axis=1), 6) == 1):
+            print(f"Error: Weights for risk bucket {bucket} must sum to 1.")
             return False
     
     return True

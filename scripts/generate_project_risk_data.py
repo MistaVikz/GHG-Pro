@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import random
-import sys
 import os
 import logging
 import argparse
@@ -9,23 +8,25 @@ import argparse
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
-NUM_FACTORS=5
-
 if __name__ == "__main__":
     try:
         # Parse command line arguments
         parser = argparse.ArgumentParser()
         parser.add_argument('-p', '--projects', type=int, default=100, help='Number of projects')
         parser.add_argument('-b', '--buckets', type=int, default=5, help='Number of risk buckets')
+        parser.add_argument('-f', '--factors', type=int, default=5, help='Number of factors')
         args = parser.parse_args()
 
-        if not 1 <= args.projects <= 1000:
-            raise ValueError("Number of projects must be an integer between 1 and 1000")
+        if not 0 <= args.projects <= 1000:
+            raise ValueError("Number of projects must be an integer between 0 and 1000")
         if not 1 <= args.buckets <= 10:
             raise ValueError("Number of risk buckets must be an integer between 1 and 10")
+        if not 1 <= args.factors <= 10:
+            raise ValueError("Number of factors must be an integer between 1 and 10")
 
         num_projects = args.projects
         num_buckets = args.buckets
+        num_factors = args.factors
 
         # Define the columns
         columns = [
@@ -33,7 +34,7 @@ if __name__ == "__main__":
         ]
 
         for i in range(1, num_buckets + 1):
-            for j in range(1, NUM_FACTORS + 1):
+            for j in range(1, num_factors + 1):
                 columns.append(f'risk_bucket_{i}_factor_{j}')
                 columns.append(f'risk_bucket_{i}_weight_{j}')
 
@@ -59,9 +60,10 @@ if __name__ == "__main__":
             data[f'offered_volume_year_{i}'] = np.random.randint(100000, 950001, num_projects)
 
         for i in range(1, num_buckets + 1):
-            for j in range(1, NUM_FACTORS + 1):
+            weights = np.random.dirichlet(np.ones(num_factors), size=num_projects)
+            for j in range(1, num_factors + 1):
                 data[f'risk_bucket_{i}_factor_{j}'] = np.random.randint(0, 11, num_projects)
-                data[f'risk_bucket_{i}_weight_{j}'] = [0.2] * num_projects
+                data[f'risk_bucket_{i}_weight_{j}'] = weights[:, j-1]
 
         # Create a DataFrame
         df = pd.DataFrame(data)
@@ -92,7 +94,7 @@ if __name__ == "__main__":
             df_default_rates.to_excel(writer, sheet_name='Default Rates')
             df_recovery_potential.to_excel(writer, sheet_name='Recovery Potential')
 
-        print(f"Generated {num_projects} projects with {num_buckets} risk buckets and saved to GHG_Data.xlsx")
+        print(f"Generated {num_projects} projects with {num_buckets} risk buckets and {num_factors} factors and saved to GHG_Data.xlsx")
 
     except IOError as e:
         logging.error(f"An error occurred while writing to the Excel file: {e}")
