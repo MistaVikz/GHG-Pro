@@ -31,18 +31,23 @@ Note: Make sure you have Python [3.0] or higher installed on your system.
 
 ### Usage
 
-To run the GHG Risk Evaluation project, navigate to the main directory and execute the `project_risk.py` file using Python:
-`python project_risk.py`
+To run the GHG Risk Evaluation project, navigate to the main directory and execute the project_risk.py file using Python:
+python project_risk.py
 
-This will read in the data and perform the analysis.
+This will read in the data and perform the analysis. By default, it will look for an Excel file named GHG_Data.xlsx in the data directory. However, you can specify the input file format as either 'excel' or 'csv' by passing an optional command line argument, like this:
+python project_risk.py -i csv
 
-If you want to generate sample data for testing purposes, you can use the `generate_project_risk_data.py` script located in the scripts directory. To generate sample data, run the following command:
-`python scripts/generate_project_risk_data.py`
+If you choose 'csv', the script will instead look for three separate CSV files named GHG_Data.csv, Default_Rates.csv, and Recovery_Potential.csv in the data directory.
 
-By default, this script will generate 100 test projects with 5 risk buckets and 5 risk factors. You can specify the number of test projects, risk buckets, and risk factors to generate by passing optional command line arguments, like this:
-`python scripts/generate_project_risk_data.py -p 10 -b 3 -f 4`
+If you want to generate sample data for testing purposes, you can use the generate_project_risk_data.py script located in the scripts directory. To generate sample data, run the following command:
+python scripts/generate_project_risk_data.py
 
-Replace 10 with the desired number of test projects, 3 with the desired number of risk buckets, and 4 with the desired number of risk factors. The number of test projects must be an integer between 0 and 1000, the number of risk buckets must be an integer between 1 and 10, and the number of risk factors must be an integer between 1 and 10.
+By default, this script will generate 100 test projects with 5 risk buckets and 5 risk factors and save them to an Excel file named GHG_Data.xlsx. You can specify the number of test projects, risk buckets, and risk factors to generate by passing optional command line arguments, like this:
+python scripts/generate_project_risk_data.py -p 10 -b 3 -f 4
+
+Replace 10 with the desired number of test projects, 3 with the desired number of risk buckets, and 4 with the desired number of risk factors. The number of test projects must be an integer between 0 and 1000, the number of risk buckets must be an integer between 1 and 10, and the number of risk factors must be an integer between 1 and 10. You can also specify the output file format as either 'excel' or 'csv' by adding the -o option, like this:
+python scripts/generate_project_risk_data.py -p 10 -b 3 -f 4 -o csv
+
 Note: Make sure you have the required dependencies installed (see the Requirements section above) before running the project.
 
 ### Methodology
@@ -114,12 +119,13 @@ For example:
 #### Data Processing and Validation
 
 The data from the 3 sheets is loaded and processed by the `load_and_process_data` function, which:
-- Loads the data from the Excel file into three separate DataFrames: df_project, df_default_rates, and df_recovery_potential.
-- Sets the index for the df_default_rates and df_recovery_potential DataFrames.
-- Converts the column names of df_default_rates and df_recovery_potential to integers.
-- Replaces NaN values with 0 in the risk bucket factors and weights columns of df_project.
-- Converts the 'Screening Date' column of df_project to datetime format.
-- Please ensure that the input file adheres to this column structure and formatting to ensure proper functioning of the project.
+
+Loads the data from either an Excel file (default) or CSV files into three separate DataFrames: df_project, df_default_rates, and df_recovery_potential. The input file format can be specified as 'excel' or 'csv' using a command line argument.
+Sets the index for the df_default_rates and df_recovery_potential DataFrames.
+Converts the column names of df_default_rates and df_recovery_potential to integers.
+Replaces NaN values with 0 in the risk bucket factors and weights columns of df_project.
+Converts the 'Screening Date' column of df_project to datetime format.
+Please ensure that the input file adheres to this column structure and formatting to ensure proper functioning of the project. If using CSV files, please ensure that there are three separate files named 'GHG_Data.csv', 'Default_Rates.csv', and 'Recovery_Potential.csv'.
 
 The `valid_project_data` function validates the data in the df_project DataFrame by checking the following conditions:
 - All required columns are present.

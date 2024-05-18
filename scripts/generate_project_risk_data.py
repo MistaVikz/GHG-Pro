@@ -17,6 +17,7 @@ if __name__ == "__main__":
         parser.add_argument('-p', '--projects', type=int, default=100, help='Number of projects')
         parser.add_argument('-b', '--buckets', type=int, default=5, help='Number of risk buckets')
         parser.add_argument('-f', '--factors', type=int, default=5, help='Number of factors')
+        parser.add_argument('-o', '--output', choices=['excel', 'csv'], default='excel', help='Output file format')
         args = parser.parse_args()
 
         if not 0 <= args.projects <= 1000:
@@ -33,7 +34,7 @@ if __name__ == "__main__":
         # Define the columns
         columns = [
             'project_id', 'project_name', 'contract_duration', 'country', 'technology', 'counterparty', 'start_year', 'screening_date'
-        ]
+            ]
 
         for i in range(1, num_buckets + 1):
             for j in range(1, num_factors + 1):
@@ -70,12 +71,10 @@ if __name__ == "__main__":
         # Create a DataFrame
         df = pd.DataFrame(data)
 
-        # Write the DataFrame to an Excel file
-        with pd.ExcelWriter(os.path.join('..', 'data', 'GHG_Data.xlsx')) as writer:
-            df.to_excel(writer, sheet_name='Project Data', index=False)
-
-            # Write Default Rates and Recovery Potential To the same excel file
-
+        if args.output == 'csv':
+            # Write the DataFrame to a CSV file
+            df.to_csv(os.path.join('..', 'data', 'GHG_Data.csv'), index=False)
+        
             default_rates = {
                 "Investment": {i: 0.14 * i for i in range(1, NUM_YEARS + 1)},
                 "Speculative": {i: 4.49 * i for i in range(1, NUM_YEARS + 1)},
@@ -92,14 +91,40 @@ if __name__ == "__main__":
             df_default_rates = pd.DataFrame(default_rates).T
             df_recovery_potential = pd.DataFrame(recovery_potential).T
 
-            # Save DataFrames to Excel worksheets
-            df_default_rates.to_excel(writer, sheet_name='Default Rates')
-            df_recovery_potential.to_excel(writer, sheet_name='Recovery Potential')
+            # Save DataFrames to csv files
+            df_default_rates.to_csv(os.path.join('..', 'data', 'Default_Rates.csv'))
+            df_recovery_potential.to_csv(os.path.join('..', 'data', 'Recovery_Potential.csv'))
+        else:
+            # Write the DataFrame to an Excel file
+            with pd.ExcelWriter(os.path.join('..', 'data', 'GHG_Data.xlsx')) as writer:
+                df.to_excel(writer, sheet_name='Project Data', index=False)
 
-        print(f"Generated {num_projects} projects with {num_buckets} risk buckets and {num_factors} factors and saved to GHG_Data.xlsx")
+                # Write Default Rates and Recovery Potential To the same excel file
+
+                default_rates = {
+                    "Investment": {i: 0.14 * i for i in range(1, NUM_YEARS + 1)},
+                    "Speculative": {i: 4.49 * i for i in range(1, NUM_YEARS + 1)},
+                    "C": {i: 27.58 * i for i in range(1, NUM_YEARS + 1)}
+                }
+
+                recovery_potential = {
+                    "Investment": {i: 0 * i for i in range(1, NUM_YEARS + 1)},
+                    "Speculative": {i: 0 * i for i in range(1, NUM_YEARS + 1)},
+                    "C": {i: 0 * i for i in range(1, NUM_YEARS + 1)}
+                }
+
+                # Convert dictionaries to DataFrames
+                df_default_rates = pd.DataFrame(default_rates).T
+                df_recovery_potential = pd.DataFrame(recovery_potential).T
+
+                # Save DataFrames to Excel worksheets
+                df_default_rates.to_excel(writer, sheet_name='Default Rates')
+                df_recovery_potential.to_excel(writer, sheet_name='Recovery Potential')
+
+        print(f"Generated {num_projects} projects with {num_buckets} risk buckets and {num_factors} factors and saved to GHG_Data.{args.output}")
 
     except IOError as e:
-        logging.error(f"An error occurred while writing to the Excel file: {e}")
+        logging.error(f"An error occurred while writing to the {args.output.upper()} file: {e}")
     except Exception as e:
         logging.error(f"An unexpected error occurred: {e}")
         raise

@@ -1,23 +1,27 @@
-# project_risk.py
-# Author: Mark Vickers
-# Date Created: 2024-05-11
-# Description: Calculates project risk scores and generates output tables
-
 from utils.io import *
 from utils.risk_calculation import *
 from utils.analysis import *
 import logging
+import argparse
+
+NUM_YEARS = 10
 
 logging.basicConfig(level=logging.INFO)
 
 if __name__ == "__main__":
     try:
-        risk_bucket_count, risk_factor_count, df_project, df_default_rates, df_recovery_potential = load_and_process_data()
+        parser = argparse.ArgumentParser()
+        parser.add_argument('-i', '--input', choices=['excel', 'csv'], default='excel', help='Input file format')
+        args = parser.parse_args()
+        input_choice = args.input
+
+        risk_bucket_count, risk_factor_count, df_project, df_default_rates, df_recovery_potential = load_and_process_data(input_choice)
 
         if valid_project_data(df_project,risk_bucket_count,risk_factor_count) and check_df_format(df_default_rates, df_recovery_potential):        
 
             # Calculate Risk Bucket Risk Scores and Ratings for each risk bucket 
-            df_project = calculate_risk_bucket_scores(df_project,risk_bucket_count)        
+            df_project = calculate_risk_bucket_scores(df_project,risk_bucket_count,risk_factor_count) 
+
             for i in range(1, risk_bucket_count + 1):
                 df_project[f'risk_bucket_{i}_rating'] = score_to_rating_vectorized(df_project[f'risk_bucket_{i}_score'])
             
@@ -28,7 +32,7 @@ if __name__ == "__main__":
         
             # Run the yearly simulations for all projects
             df_project = run_simulation(df_project, risk_bucket_count)
-            overall_expected_value_percentage = df_project[[f'project_expected_value_percentage_year_{year}' for year in range(1, 11)]].mean(axis=1, skipna=True) * 10
+            overall_expected_value_percentage = df_project[[f'project_expected_value_percentage_year_{year}' for year in range(1, NUM_YEARS+1)]].mean(axis=1, skipna=True) * 10
             df_project['overall_project_rating'] = score_to_rating_vectorized(overall_expected_value_percentage)
 
             # Calculate Project Output Tables

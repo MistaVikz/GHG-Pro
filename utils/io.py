@@ -7,9 +7,12 @@ from openpyxl import Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.styles import Font, Border, Side, Alignment, PatternFill
 
-def load_and_process_data():
+def load_and_process_data(input_choice='excel'):
     """
-    Load and process data from Excel file.
+    Load and process data from Excel file or CSV files.
+
+    Parameters:
+    input_choice (str): The format of the input data. Default is 'excel'.
 
     Returns:
     num_buckets (int): The number of risk buckets.
@@ -20,15 +23,29 @@ def load_and_process_data():
 
     Notes:
     This function assumes that the input Excel file contains three sheets named 'Project Data', 'Default Rates', and 'Recovery Potential'.
+    If input_choice is 'csv', it assumes that there are three separate CSV files named 'GHG_Data.csv', 'Default_Rates.csv', and 'Recovery_Potential.csv'.
     """
-    # Load Data
-    current_dir = os.path.dirname(__file__)
-    data_dir = os.path.join(current_dir, '..', 'data')
-    file_path = os.path.join(data_dir, 'GHG_Data.xlsx')
+    if input_choice == 'excel':
+        # Load Data
+        current_dir = os.path.dirname(__file__)
+        data_dir = os.path.join(current_dir, '..', 'data')
+        file_path = os.path.join(data_dir, 'GHG_Data.xlsx')
 
-    df_project = pd.read_excel(file_path, sheet_name='Project Data')  
-    df_default_rates = pd.read_excel(file_path, sheet_name='Default Rates')
-    df_recovery_potential = pd.read_excel(file_path, sheet_name='Recovery Potential')
+        df_project = pd.read_excel(file_path, sheet_name='Project Data')  
+        df_default_rates = pd.read_excel(file_path, sheet_name='Default Rates')
+        df_recovery_potential = pd.read_excel(file_path, sheet_name='Recovery Potential')
+
+    elif input_choice == 'csv':
+        # Load Data
+        current_dir = os.path.dirname(__file__)
+        data_dir = os.path.join(current_dir, '..', 'data')
+
+        df_project = pd.read_csv(os.path.join(data_dir, 'GHG_Data.csv'))  
+        df_default_rates = pd.read_csv(os.path.join(data_dir, 'Default_Rates.csv'))
+        df_recovery_potential = pd.read_csv(os.path.join(data_dir, 'Recovery_Potential.csv'))
+
+    else:
+        raise ValueError("Invalid input choice. Please choose 'excel' or 'csv'.")
 
     # Set index for default rates and recovery potential dataframes
     df_default_rates = df_default_rates.set_index('Unnamed: 0')
