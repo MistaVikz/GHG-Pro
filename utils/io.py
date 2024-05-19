@@ -331,14 +331,7 @@ def valid_project_data(df: pd.DataFrame, num_buckets: int, num_factors: int) -> 
     if df['start_year'].dtype != 'int64' or (df['start_year'] < 2000).any():
         print("Error: Start Year column contains invalid values. Values must be integers greater or equal to 2000.")
         return False
-    
-    # Check if Offered Volume is an integer greater than 0
-    for year in range(1, 11):
-        column_name = f'offered_volume_year_{year}'
-        if df[column_name].dtype != 'int64' or (df[column_name] <= 0).any():
-            print(f"Error: {column_name} column contains invalid values. Values must be integers greater than 0.")
-            return False
-    
+        
     # Check if Screening Date is a date
     if df['screening_date'].dtype != 'datetime64[ns]':
         print("Error: Screening Date column contains invalid values. Values must be dates.")

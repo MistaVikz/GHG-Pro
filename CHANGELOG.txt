@@ -2,3 +2,4 @@
 1.1.0   2024/5/17   Between 1 and 10 risk factors are now supported.
 1.1.1   2024/5/17   Bug fixes and tweaked the random weights generation.
 1.2.1   2024/5/17   Added support for CSV imports.
+1.2.2   2024/5/18   Fixed bug in generate_project_risk_data.py where volumes were being generated for years greater than contract duration

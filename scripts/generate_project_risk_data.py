@@ -31,16 +31,17 @@ if __name__ == "__main__":
         num_buckets = args.buckets
         num_factors = args.factors
 
-        # Define the columns
+        # Column names
         columns = [
             'project_id', 'project_name', 'contract_duration', 'country', 'technology', 'counterparty', 'start_year', 'screening_date'
-            ]
+        ]
 
         for i in range(1, num_buckets + 1):
             for j in range(1, num_factors + 1):
                 columns.append(f'risk_bucket_{i}_factor_{j}')
                 columns.append(f'risk_bucket_{i}_weight_{j}')
 
+        # Lists of names
         environment_names = ["Wind", "Hydro", "Solar", "Geothermal", "Biofuel", "Green", "Recycling", "Eco-Friendly", "Sustainable", "Conservation"]
         site_names = ["East", "West", "North", "South", "Site A", "Site B", "Site C", "Site D", "Park", "Reserve"]
         company_names = ["GreenTech Inc.", "EcoEnergy Corp.", "Renewable Solutions", "Sustainable Futures", "Clean Power Co.", "ClimateCare Ltd.", "EarthFirst Energy", "Nature's Way", "Pure Planet", "BioEnergy Systems"]
@@ -48,6 +49,7 @@ if __name__ == "__main__":
         technology_list = ['Renewable Energy', 'Carbon Capture', 'Energy Efficiency', 'Waste Management', 'Water Conservation', 'Sustainable Agriculture', 'Forestry Management', 'Air Pollution Reduction', 'Waste-to-Energy', 'Green Building Practices']
         counterparty_list = ['Non-Profit Organization', 'Government Agency', 'Community Group', 'Private Company', 'NGO']
 
+        # Data
         data = {
             'project_id': range(1, num_projects + 1),
             'project_name': [' '.join(random.sample([random.choice(company_names), random.choice(environment_names), random.choice(site_names)], 3)) for _ in range(num_projects)],
@@ -59,9 +61,11 @@ if __name__ == "__main__":
             'screening_date': ['2024-05-11'] * num_projects
         }
 
+        # Offered volumes
         for i in range(1, NUM_YEARS + 1):
-            data[f'offered_volume_year_{i}'] = np.random.randint(100000, 950001, num_projects)
+            data[f'offered_volume_year_{i}'] = np.where(i <= data['contract_duration'], np.random.randint(100000, 950001, num_projects), np.nan)
 
+        # Risk factors and weights
         for i in range(1, num_buckets + 1):
             weights = np.random.dirichlet(np.ones(num_factors) * 10, size=num_projects)
             for j in range(1, num_factors + 1):
