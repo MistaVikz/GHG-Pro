@@ -181,9 +181,7 @@ def export_ghg_data(output_folder,df_project, df_default_rates, df_recovery_pote
         cell.font = Font(bold=True, underline='single')
 
     # Save simulation output
-    now = datetime.datetime.now()
-    date_time = now.strftime("%Y%m%d_%H%M%S")
-    wb.save(f"{output_folder}/GHG_Data_Simulation_{date_time}.xlsx")
+    wb.save(f"{output_folder}/GHG_Data_Simulation.xlsx")
 
 def export_project_risk_output(output_folder, top_projects, bottom_projects, country_table, technology_table, counterparty_table, df_counts, total_volumes_per_year):
     """
@@ -297,9 +295,7 @@ def export_project_risk_output(output_folder, top_projects, bottom_projects, cou
             cell.font = Font(bold=True, underline='single')
 
     # Get the current date and time
-    now = datetime.datetime.now()
-    date_time = now.strftime("%Y%m%d_%H%M%S")
-    wb.save(f"{output_folder}/Project_Risk_Summary_Data_{date_time}.xlsx")
+    wb.save(f"{output_folder}/Project_Risk_Summary_Data.xlsx")
 
 def valid_project_data(df: pd.DataFrame, num_buckets: int, num_factors: int) -> bool:
     """
