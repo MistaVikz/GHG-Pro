@@ -313,6 +313,7 @@ def valid_project_data(df: pd.DataFrame, num_buckets: int, num_factors: int) -> 
     Returns:
         bool: True if the data is valid, False otherwise.
     """
+
     # Check if all required columns exist
     required_columns = ['project_id', 'project_name', 'contract_duration', 'country', 'technology', 'counterparty', 'start_year', 'screening_date']
     for year in range(1, 11):
@@ -410,20 +411,29 @@ def check_df_format(df_default_rates, df_recovery_potential):
 
     # Check if both dataframes have the same shape
     if df_default_rates.shape != df_recovery_potential.shape:
+        print("Error: Dataframes do not have the same shape.")
+        print(f"df_default_rates shape: {df_default_rates.shape}")
+        print(f"df_recovery_potential shape: {df_recovery_potential.shape}")
         return False
 
     # Check if both dataframes have the correct row names
     if list(df_default_rates.index) != ['Investment', 'Speculative', 'C'] or list(df_recovery_potential.index) != ['Investment', 'Speculative', 'C']:
+        print("Error: Dataframes do not have the correct row names.")
+        print(f"df_default_rates index: {list(df_default_rates.index)}")
+        print(f"df_recovery_potential index: {list(df_recovery_potential.index)}")
         return False
 
     # Check if both dataframes have the correct column names
     if list(df_default_rates.columns) != list(range(1, 11)) or list(df_recovery_potential.columns) != list(range(1, 11)):
+        print("Error: Dataframes do not have the correct column names.")
+        print(f"df_default_rates columns: {list(df_default_rates.columns)}")
+        print(f"df_recovery_potential columns: {list(df_recovery_potential.columns)}")
         return False
 
     # Check if all values in both dataframes are numbers greater or equal to zero
     if not ((df_default_rates.apply(lambda x: x >= 0) & df_default_rates.apply(lambda x: pd.to_numeric(x, errors='coerce')).notnull()).all().all() and
             (df_recovery_potential.apply(lambda x: x >= 0) & df_recovery_potential.apply(lambda x: pd.to_numeric(x, errors='coerce')).notnull()).all().all()):
+        print("Error: Dataframes contain invalid values.")
         return False
 
     return True
-
