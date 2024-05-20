@@ -20,7 +20,6 @@ if __name__ == "__main__":
         risk_bucket_count, risk_factor_count, df_project, df_default_rates, df_recovery_potential = load_and_process_data(input_choice)
 
         if valid_project_data(df_project,risk_bucket_count,risk_factor_count) and check_df_format(df_default_rates, df_recovery_potential):        
-
             # Calculate Risk Bucket Risk Scores and Ratings for each risk bucket 
             df_project = calculate_risk_bucket_scores(df_project,risk_bucket_count,risk_factor_count) 
             for i in range(1, risk_bucket_count + 1):
