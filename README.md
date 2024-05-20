@@ -34,10 +34,18 @@ Note: Make sure you have Python [3.0] or higher installed on your system.
 To run the GHG Risk Evaluation project, navigate to the main directory and execute the project_risk.py file using Python:
 python project_risk.py
 
-This will read in the data and perform the analysis. By default, it will look for an Excel file named GHG_Data.xlsx in the data directory. However, you can specify the input file format as either 'excel' or 'csv' by passing an optional command line argument, like this:
+This will read in the data and perform the analysis. By default, it will look for an Excel file named GHG_Data.xlsx in the data directory. However, you can specify the input file format as either 'excel', 'csv', or 'tsv' by passing an optional command line argument, like this:
 python project_risk.py -i csv
 
-If you choose 'csv', the script will instead look for three separate CSV files named GHG_Data.csv, Default_Rates.csv, and Recovery_Potential.csv in the data directory.
+If you choose 'csv', the script will instead look for three separate CSV files named GHG_Data.csv, Default_Rates.csv, and Recovery_Potential.csv in the data directory. If you choose 'tsv', the script will look for three separate TSV files named GHG_Data.tsv, Default_Rates.tsv, and Recovery_Potential.tsv in the data directory.
+
+You can also control whether the console output is displayed or not by using the -d option. To display the console output, use -d on:
+python project_risk.py -d on
+
+To hide the console output, use -d off:
+python project_risk.py -d off
+
+By default, the console output is displayed.
 
 If you want to generate sample data for testing purposes, you can use the generate_project_risk_data.py script located in the scripts directory. To generate sample data, run the following command:
 python scripts/generate_project_risk_data.py
@@ -45,7 +53,7 @@ python scripts/generate_project_risk_data.py
 By default, this script will generate 100 test projects with 5 risk buckets and 5 risk factors and save them to an Excel file named GHG_Data.xlsx. You can specify the number of test projects, risk buckets, and risk factors to generate by passing optional command line arguments, like this:
 python scripts/generate_project_risk_data.py -p 10 -b 3 -f 4
 
-Replace 10 with the desired number of test projects, 3 with the desired number of risk buckets, and 4 with the desired number of risk factors. The number of test projects must be an integer between 0 and 1000, the number of risk buckets must be an integer between 1 and 10, and the number of risk factors must be an integer between 1 and 10. You can also specify the output file format as either 'excel' or 'csv' by adding the -o option, like this:
+Replace 10 with the desired number of test projects, 3 with the desired number of risk buckets, and 4 with the desired number of risk factors. The number of test projects must be an integer between 0 and 1000, the number of risk buckets must be an integer between 1 and 10, and the number of risk factors must be an integer between 1 and 10. You can also specify the output file format as either 'excel', 'csv', or 'tsv' by adding the -o option, like this:
 python scripts/generate_project_risk_data.py -p 10 -b 3 -f 4 -o csv
 
 Note: Make sure you have the required dependencies installed (see the Requirements section above) before running the project.
@@ -68,7 +76,7 @@ The function first calculates the end years for each project by adding the contr
 
 ### Data and Inputs
 
-This project requires a single input file, GHG_Data.xlsx, located in the data directory. The file should be in Excel (.xlsx) format and contain the following sheets:
+This project either requires a single excel input file, GHG_Data.xlsx, located in the data directory, or 3 csv/tsv files (ex: GHG_Data.csv, Default_Rates.csv, Recovery_Potential.csv). The file(s) need to have the following organization:
 
 #### Project Data
 

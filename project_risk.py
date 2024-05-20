@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO)
 if __name__ == "__main__":
     try:
         parser = argparse.ArgumentParser()
-        parser.add_argument('-i', '--input', choices=['excel', 'csv'], default='excel', help='Input file format')
+        parser.add_argument('-i', '--input', choices=['excel', 'csv', 'tsv'], default='excel', help='Input file format')
         parser.add_argument('-d', '--display', type=str, choices=['on', 'off'], default='on', help='Display console output')
         args = parser.parse_args()
         input_choice = args.input
@@ -54,6 +54,8 @@ if __name__ == "__main__":
         else:
             if input_choice == 'excel':
                 print("Data not loaded properly from GHG_Data.xlsx")
+            elif input_choice == 'tsv':
+                print("Data not loaded properly from GHG_Data.tsv, Default_Rates.tsv, and/or Recovery_Potential.tsv")
             else:
                 print("Data not loaded properly from GHG_Data.csv, Default_Rates.csv, and/or Recovery_Potential.csv")
                 

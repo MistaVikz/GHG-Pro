@@ -23,7 +23,7 @@ def load_and_process_data(input_choice='excel'):
 
     Notes:
     This function assumes that the input Excel file contains three sheets named 'Project Data', 'Default Rates', and 'Recovery Potential'.
-    If input_choice is 'csv', it assumes that there are three separate CSV files named 'GHG_Data.csv', 'Default_Rates.csv', and 'Recovery_Potential.csv'.
+    If input_choice is 'csv' or 'tsv', it assumes that there are three separate files named 'GHG_Data.csv', 'Default_Rates.csv', and 'Recovery_Potential.csv' or 'GHG_Data.tsv', 'Default_Rates.tsv', and 'Recovery_Potential.tsv' respectively.
     """
     if input_choice == 'excel':
         # Load Data
@@ -44,8 +44,17 @@ def load_and_process_data(input_choice='excel'):
         df_default_rates = pd.read_csv(os.path.join(data_dir, 'Default_Rates.csv'))
         df_recovery_potential = pd.read_csv(os.path.join(data_dir, 'Recovery_Potential.csv'))
 
+    elif input_choice == 'tsv':
+        # Load Data
+        current_dir = os.path.dirname(__file__)
+        data_dir = os.path.join(current_dir, '..', 'data')
+
+        df_project = pd.read_csv(os.path.join(data_dir, 'GHG_Data.tsv'), sep='\t')  
+        df_default_rates = pd.read_csv(os.path.join(data_dir, 'Default_Rates.tsv'), sep='\t')
+        df_recovery_potential = pd.read_csv(os.path.join(data_dir, 'Recovery_Potential.tsv'), sep='\t')
+
     else:
-        raise ValueError("Invalid input choice. Please choose 'excel' or 'csv'.")
+        raise ValueError("Invalid input choice. Please choose 'excel', 'csv', or 'tsv'.")
 
     # Set index for default rates and recovery potential dataframes
     df_default_rates = df_default_rates.set_index('Unnamed: 0')

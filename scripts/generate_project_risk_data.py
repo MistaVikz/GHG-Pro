@@ -17,7 +17,7 @@ if __name__ == "__main__":
         parser.add_argument('-p', '--projects', type=int, default=100, help='Number of projects')
         parser.add_argument('-b', '--buckets', type=int, default=5, help='Number of risk buckets')
         parser.add_argument('-f', '--factors', type=int, default=5, help='Number of factors')
-        parser.add_argument('-o', '--output', choices=['excel', 'csv'], default='excel', help='Output file format')
+        parser.add_argument('-o', '--output', choices=['excel', 'csv', 'tsv'], default='excel', help='Output file format')
         args = parser.parse_args()
 
         if not 0 <= args.projects <= 1000:
@@ -78,7 +78,7 @@ if __name__ == "__main__":
         if args.output == 'csv':
             # Write the DataFrame to a CSV file
             df.to_csv(os.path.join('..', 'data', 'GHG_Data.csv'), index=False)
-        
+    
             default_rates = {
                 "Investment": {i: 0.14 * i for i in range(1, NUM_YEARS + 1)},
                 "Speculative": {i: 4.49 * i for i in range(1, NUM_YEARS + 1)},
@@ -98,13 +98,35 @@ if __name__ == "__main__":
             # Save DataFrames to csv files
             df_default_rates.to_csv(os.path.join('..', 'data', 'Default_Rates.csv'))
             df_recovery_potential.to_csv(os.path.join('..', 'data', 'Recovery_Potential.csv'))
+        elif args.output == 'tsv':
+            # Write the DataFrame to a TSV file
+            df.to_csv(os.path.join('..', 'data', 'GHG_Data.tsv'), sep='\t', index=False)
+    
+            default_rates = {
+                "Investment": {i: 0.14 * i for i in range(1, NUM_YEARS + 1)},
+                "Speculative": {i: 4.49 * i for i in range(1, NUM_YEARS + 1)},
+                "C": {i: 27.58 * i for i in range(1, NUM_YEARS + 1)}
+            }
+
+            recovery_potential = {
+                "Investment": {i: 0 * i for i in range(1, NUM_YEARS + 1)},
+                "Speculative": {i: 0 * i for i in range(1, NUM_YEARS + 1)},
+                "C": {i: 0 * i for i in range(1, NUM_YEARS + 1)}
+            }
+
+            # Convert dictionaries to DataFrames
+            df_default_rates = pd.DataFrame(default_rates).T
+            df_recovery_potential = pd.DataFrame(recovery_potential).T
+
+            # Save DataFrames to tsv files
+            df_default_rates.to_csv(os.path.join('..', 'data', 'Default_Rates.tsv'), sep='\t')
+            df_recovery_potential.to_csv(os.path.join('..', 'data', 'Recovery_Potential.tsv'), sep='\t')
         else:
             # Write the DataFrame to an Excel file
             with pd.ExcelWriter(os.path.join('..', 'data', 'GHG_Data.xlsx')) as writer:
                 df.to_excel(writer, sheet_name='Project Data', index=False)
 
                 # Write Default Rates and Recovery Potential To the same excel file
-
                 default_rates = {
                     "Investment": {i: 0.14 * i for i in range(1, NUM_YEARS + 1)},
                     "Speculative": {i: 4.49 * i for i in range(1, NUM_YEARS + 1)},
