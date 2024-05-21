@@ -96,9 +96,9 @@ def score_to_rating_vectorized(scores):
     ratings = pd.cut(scores, bins=[-1, 3.5, 7.5, 10], labels=['C', 'Speculative', 'Investment'], include_lowest=True)
     return ratings
     
-def calculate_yearly_exposure(df_project, df_default_rates, df_recovery_potential, risk_bucket_count, num_years=10):
+def calculate_yearly_shortfall(df_project, df_default_rates, df_recovery_potential, risk_bucket_count, num_years=10):
     """
-    Calculate the exposure for each year and risk bucket.
+    Calculate the shortfall for each year and risk bucket.
 
     Parameters:
     df_project (DataFrame): The DataFrame containing the project data.
@@ -108,16 +108,16 @@ def calculate_yearly_exposure(df_project, df_default_rates, df_recovery_potentia
     num_years (int, optional): The number of years. Defaults to 10.
 
     Returns:
-    The DataFrame with the calculated exposures.
+    The DataFrame with the calculated shortfalls.
     """
-    exposures = pd.DataFrame(index=df_project.index)
+    shortfalls = pd.DataFrame(index=df_project.index)
     
     for j in range(1, risk_bucket_count + 1):
         for i in range(1, num_years + 1):
-            # Calculate the exposure for this year and risk bucket
-            exposures[f'risk_bucket_{j}_exposure_year_{i}'] = df_project.apply(lambda row: np.clip((df_default_rates.loc[row[f'risk_bucket_{j}_rating'], min(i, row['contract_duration'])] * (1 - df_recovery_potential.loc[row[f'risk_bucket_{j}_rating'], min(i, row['contract_duration'])])) / 100, 0, 1) if i <= row['contract_duration'] else np.nan, axis=1)
+            # Calculate the shortfall for this year and risk bucket
+            shortfalls[f'risk_bucket_{j}_shortfall_year_{i}'] = df_project.apply(lambda row: np.clip((df_default_rates.loc[row[f'risk_bucket_{j}_rating'], min(i, row['contract_duration'])] * (1 - df_recovery_potential.loc[row[f'risk_bucket_{j}_rating'], min(i, row['contract_duration'])])) / 100, 0, 1) if i <= row['contract_duration'] else np.nan, axis=1)
     
-    df_project = pd.concat([df_project, exposures], axis=1)
+    df_project = pd.concat([df_project, shortfalls], axis=1)
     
     return df_project
 
@@ -136,7 +136,7 @@ def calculate_yearly_expected_value(df_project, num_risk_buckets=5, num_years=10
     # Calculate the yearly expected value for each year and risk bucket
     for j in range(1, num_risk_buckets + 1):
         for i in range(1, num_years + 1):
-            df_project[f'risk_bucket_{j}_expected_value_year_{i}'] = df_project[f'offered_volume_year_{i}'] * (1 - df_project[f'risk_bucket_{j}_exposure_year_{i}'])
+            df_project[f'risk_bucket_{j}_expected_value_year_{i}'] = df_project[f'offered_volume_year_{i}'] * (1 - df_project[f'risk_bucket_{j}_shortfall_year_{i}'])
     
     return df_project
 

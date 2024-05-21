@@ -6,3 +6,4 @@
 1.3.2   2024/5/20   Added support for TSV inports.
 1.3.3   2024/5/21   Re-organized generate_project_risk_data.py code and fixed issues with default rate/recovery potential table generation.
 1.3.4   2024/5/21   Remove datetime stamp from output files
+1.3.5   2024/5/22   Corrected Risk Exposure to mean Risk Shortfall.
