@@ -26,7 +26,7 @@ if __name__ == "__main__":
                 df_project[f'risk_bucket_{i}_rating'] = score_to_rating_vectorized(df_project[f'risk_bucket_{i}_score'])
     
             # Prepare for the simulation
-            df_project = calculate_yearly_exposure(df_project, df_default_rates, df_recovery_potential, risk_bucket_count)
+            df_project = calculate_yearly_shortfall(df_project, df_default_rates, df_recovery_potential, risk_bucket_count)
             df_project = calculate_yearly_expected_value(df_project, risk_bucket_count)
             df_project = calculate_yearly_standard_deviation(df_project,risk_bucket_count)
 
