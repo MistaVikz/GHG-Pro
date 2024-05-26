@@ -9,7 +9,7 @@ from openpyxl.styles import Font, Border, Side, Alignment, PatternFill
 
 def load_and_process_data(input_choice='excel'):
     """
-    Load and process data from Excel file or CSV files.
+    Load and process data from Excel file or CSV/TSV files.
 
     Parameters:
     input_choice (str): The format of the input data. Default is 'excel'.
@@ -20,10 +20,11 @@ def load_and_process_data(input_choice='excel'):
     df_project (pandas.DataFrame): A DataFrame containing project data.
     df_default_rates (pandas.DataFrame): A DataFrame containing default rates data.
     df_recovery_potential (pandas.DataFrame): A DataFrame containing recovery potential data.
+    df_model (pandas.DataFrame): A DataFrame containing model configuration data.
 
     Notes:
-    This function assumes that the input Excel file contains three sheets named 'Project Data', 'Default Rates', and 'Recovery Potential'.
-    If input_choice is 'csv' or 'tsv', it assumes that there are three separate files named 'GHG_Data.csv', 'Default_Rates.csv', and 'Recovery_Potential.csv' or 'GHG_Data.tsv', 'Default_Rates.tsv', and 'Recovery_Potential.tsv' respectively.
+    This function assumes that the input Excel file contains four sheets named 'Project Data', 'Default Rates', 'Recovery Potential', and 'Model Config'.
+    If input_choice is 'csv' or 'tsv', it assumes that there are four separate files named 'GHG_Data.csv', 'Default_Rates.csv', 'Recovery_Potential.csv', and 'Model_Config.csv' or 'GHG_Data.tsv', 'Default_Rates.tsv', 'Recovery_Potential.tsv', and 'Model_Config.tsv' respectively.
     """
     if input_choice == 'excel':
         # Load Data
@@ -34,6 +35,7 @@ def load_and_process_data(input_choice='excel'):
         df_project = pd.read_excel(file_path, sheet_name='Project Data')  
         df_default_rates = pd.read_excel(file_path, sheet_name='Default Rates')
         df_recovery_potential = pd.read_excel(file_path, sheet_name='Recovery Potential')
+        df_model = pd.read_excel(file_path, sheet_name='Model Config')
 
     elif input_choice == 'csv':
         # Load Data
@@ -43,6 +45,7 @@ def load_and_process_data(input_choice='excel'):
         df_project = pd.read_csv(os.path.join(data_dir, 'GHG_Data.csv'))  
         df_default_rates = pd.read_csv(os.path.join(data_dir, 'Default_Rates.csv'))
         df_recovery_potential = pd.read_csv(os.path.join(data_dir, 'Recovery_Potential.csv'))
+        df_model = pd.read_csv(os.path.join(data_dir, 'Model_Config.csv'))
 
     elif input_choice == 'tsv':
         # Load Data
@@ -52,6 +55,7 @@ def load_and_process_data(input_choice='excel'):
         df_project = pd.read_csv(os.path.join(data_dir, 'GHG_Data.tsv'), sep='\t')  
         df_default_rates = pd.read_csv(os.path.join(data_dir, 'Default_Rates.tsv'), sep='\t')
         df_recovery_potential = pd.read_csv(os.path.join(data_dir, 'Recovery_Potential.tsv'), sep='\t')
+        df_model = pd.read_csv(os.path.join(data_dir, 'Model_Config.tsv'), sep='\t')
 
     else:
         raise ValueError("Invalid input choice. Please choose 'excel', 'csv', or 'tsv'.")
@@ -77,7 +81,7 @@ def load_and_process_data(input_choice='excel'):
     # Calculate the number of risk factors
     num_risk_factors = len([col for col in df_project.columns if 'factor' in col and f"risk_bucket_1_factor" in col])
 
-    return num_buckets, num_risk_factors, df_project, df_default_rates, df_recovery_potential
+    return num_buckets, num_risk_factors, df_project, df_default_rates, df_recovery_potential, df_model
 
 def create_output_folder():
     """
@@ -182,6 +186,42 @@ def export_ghg_data(output_folder,df_project, df_default_rates, df_recovery_pote
 
     # Save simulation output
     wb.save(f"{output_folder}/GHG_Data_Simulation.xlsx")
+
+def export_model_config(output_folder, df_model):
+    """
+    Export model configuration to an Excel file.
+
+    Parameters:
+    df_model (pandas.DataFrame): A DataFrame containing model configuration data.
+
+    Notes:
+    This function exports the input DataFrame to the 'Model_Config.xlsx' file.
+    """
+    # Create a new workbook for Model_Config.xlsx
+    wb = Workbook()
+    ws = wb.active
+    ws.title = 'Model Config'
+
+    # Write df_model to the worksheet
+    for row in dataframe_to_rows(df_model, index=False):
+        ws.append(row)
+
+    # Adjust column widths
+    for col in ws.columns:
+        ws.column_dimensions[col[0].column_letter].width = 25
+
+    # Add row color switching
+    for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=1, max_col=ws.max_column):
+        for cell in row:
+            if cell.row % 2 == 0:
+                cell.fill = PatternFill(start_color='C5C5C5', fill_type='solid')
+
+    # Bold/Underline headers
+    for cell in ws["1:1"]:
+        cell.font = Font(bold=True, underline='single')
+
+    # Save model config
+    wb.save(f"{output_folder}/Model_Config.xlsx")
 
 def export_project_risk_output(output_folder, top_projects, bottom_projects, country_table, technology_table, counterparty_table, df_counts, total_volumes_per_year):
     """

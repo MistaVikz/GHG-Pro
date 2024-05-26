@@ -131,12 +131,11 @@ Before creating the new workbook, the subroutine checks if a file named "GHG_Dat
 Once the new workbook is created, it is ready to be analyzed by the GHG Evaluation Program.
 
 ### Data and Inputs
-
-This project either requires a single excel input file, GHG_Data.xlsx, located in the data directory, or 3 csv/tsv files (ex: GHG_Data.csv, Default_Rates.csv, Recovery_Potential.csv). The file(s) need to have the following organization:
+This project either requires a single excel input file, GHG_Data.xlsx, located in the data directory, or 4 csv/tsv files (ex: GHG_Data.csv, Default_Rates.csv, Recovery_Potential.csv, Model_Config.csv). The file(s) need to have the following organization:
 
 #### Project Data
-
 This sheet should contain the following columns:
+
 - project_id: Unique identifier for each project
 - project_name: Name of each project
 - contract_duration: Contract duration for each project
@@ -153,45 +152,51 @@ This sheet should contain the following columns:
 - risk_bucket_5_weight_1 to risk_bucket_5_weight_5: Weights for Risk Bucket 5
 
 #### Default Rates
-
 This sheet should contain default rates for "Investment", "Speculative", and "C" over 10 years, with the following format:
-- Columns: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
-- Rows: Investment, Speculative, C
-- Cell values: Default rates for each category and year
-For example:
 
-|  | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Investment | 0.14 | 0.37 | 0.64 | 0.98 | 1.34 | 1.71 | 2.06 | 2.41 | 2.74 | 3.08 |
-| Speculative | 4.49 | 8.91 | 12.81 | 15.95 | 18.47 | 20.6 | 22.37 | 23.88 | 25.23 | 26.46 |
-| C | 27.58 | 38.13 | 44.28 | 48.19 | 51.09 | 52.43 | 53.59 | 54.47 | 55.66 | 56.51 |
+Columns: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+Rows: Investment, Speculative, C
+Cell values: Default rates for each category and year
+For example:
+1	2	3	4	5	6	7	8	9	10
+Investment	0.14	0.37	0.64	0.98	1.34	1.71	2.06	2.41	2.74	3.08
+Speculative	4.49	8.91	12.81	15.95	18.47	20.6	22.37	23.88	25.23	26.46
+C	27.58	38.13	44.28	48.19	51.09	52.43	53.59	54.47	55.66	56.51
 
 #### Recovery Potential
-
 This sheet should contain recovery potentials for "Investment", "Speculative", and "C" over 10 years, with the following format:
-- Columns: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
-- Rows: Investment, Speculative, C
-- Cell values: Recovery potentials for each category and year
-For example:
 
-|  | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Investment | 0 | 0.5 | 0.67 | 0.75 | 0.8 | 0.83 | 0.86 | 0.88 | 0.89 | 0.9 |
-| Speculative | 0 | 0 | 0.03 | 0.5 | 0.6 | 0.67 | 0.71 | 0.75 | 0.78 | 0.8 |
-| C | 0 | 0 | 0 | 0 | 0.08 | 0.24 | 0.34 | 0.43 | 0.49 | 0.54 |
+Columns: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+Rows: Investment, Speculative, C
+Cell values: Recovery potentials for each category and year
+For example:
+1	2	3	4	5	6	7	8	9	10
+Investment	0	0.5	0.67	0.75	0.8	0.83	0.86	0.88	0.89	0.9
+Speculative	0	0	0.03	0.5	0.6	0.67	0.71	0.75	0.78	0.8
+C	0	0	0	0	0.08	0.24	0.34	0.43	0.49	0.54
+
+#### Model Config
+This sheet should contain the model configuration data with the following columns:
+
+- model_id: Unique identifier for the model
+- model_name: Name of the model
+- number_of_risk_buckets: Number of risk buckets in the model
+- number_of_risk_factors: Number of risk factors in the model
+- model_last_saved: Date the model was last saved
 
 #### Data Processing and Validation
+The data from the 4 sheets is loaded and processed by the `load_and_process_data` function, which:
 
-The data from the 3 sheets is loaded and processed by the `load_and_process_data` function, which:
+- Loads the data from either an Excel file (default) or CSV files into four separate DataFrames: df_project, df_default_rates, df_recovery_potential, and df_model. The input file format can be specified as 'excel' or 'csv' using a command line argument.
+- Sets the index for the df_default_rates and df_recovery_potential DataFrames.
+- Converts the column names of df_default_rates and df_recovery_potential to integers.
+- Replaces NaN values with 0 in the risk bucket factors and weights columns of df_project.
+- Converts the 'Screening Date' column of df_project to datetime format.
 
-Loads the data from either an Excel file (default) or CSV files into three separate DataFrames: df_project, df_default_rates, and df_recovery_potential. The input file format can be specified as 'excel' or 'csv' using a command line argument.
-Sets the index for the df_default_rates and df_recovery_potential DataFrames.
-Converts the column names of df_default_rates and df_recovery_potential to integers.
-Replaces NaN values with 0 in the risk bucket factors and weights columns of df_project.
-Converts the 'Screening Date' column of df_project to datetime format.
-Please ensure that the input file adheres to this column structure and formatting to ensure proper functioning of the project. If using CSV files, please ensure that there are three separate files named 'GHG_Data.csv', 'Default_Rates.csv', and 'Recovery_Potential.csv'.
+Please ensure that the input file adheres to this column structure and formatting to ensure proper functioning of the project. If using CSV files, please ensure that there are four separate files named 'GHG_Data.csv', 'Default_Rates.csv', 'Recovery_Potential.csv', and 'Model_Config.csv'.
 
 The `valid_project_data` function validates the data in the df_project DataFrame by checking the following conditions:
+
 - All required columns are present.
 - Project ID is not null and unique.
 - Contract Duration is an integer between 1 and 10.
@@ -213,15 +218,15 @@ The `check_df_format` function checks if two dataframes, df_default_rates and df
 If any of these conditions are not met, the function returns False. Otherwise, it returns True.
 
 ### Output
+After running the GHG Risk Evaluation project, three output files will be generated:
 
-After running the GHG Risk Evaluation project, two output files will be generated:
+- GHG_Data_Simulation.xlsx: This file contains the detailed analysis output for every project that was screened.
+- Project_Risk_Summary_Data.xlsx: This file summarizes the simulation results by country, counterparty, technology, and by year.
+- Model_Config.xlsx: This file contains the model configuration data used for the simulation.
 
-1. `GHG_Data_Simulation.xlsx`: This file contains the detailed analysis output for every project that was screened.
-2. `Project_Risk_Summary_Data.xlsx`: This file summarizes the simulation results by country, counterparty, technology, and by year.
+Both output files will be saved to a timestamped subfolder in the /output directory. The subfolder name will reflect the date and time when the analysis was run, allowing you to easily keep track of different runs and compare results.
 
-Both output files will be saved to a timestamped subfolder in the `/output` directory. The subfolder name will reflect the date and time when the analysis was run, allowing you to easily keep track of different runs and compare results.
-
-License and Credits
+### License and Credits
 This GHG Risk Evaluation project is released under the Creative Commons Attribution 4.0 International License. This project would not be possible without the following sources:
 
 - The process of converting risk scores to ratings was made possible by the European Bank for Reconstruction and Development (EBRD).

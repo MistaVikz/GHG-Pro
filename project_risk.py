@@ -17,7 +17,7 @@ if __name__ == "__main__":
         input_choice = args.input
         display_output = args.display == 'on'
 
-        risk_bucket_count, risk_factor_count, df_project, df_default_rates, df_recovery_potential = load_and_process_data(input_choice)
+        risk_bucket_count, risk_factor_count, df_project, df_default_rates, df_recovery_potential, df_model = load_and_process_data(input_choice)
 
         if valid_project_data(df_project,risk_bucket_count,risk_factor_count) and check_df_format(df_default_rates, df_recovery_potential):        
             # Calculate Risk Bucket Risk Scores and Ratings for each risk bucket 
@@ -49,6 +49,7 @@ if __name__ == "__main__":
                 display_project_risk_output(df_counts, top_projects, bottom_projects, country_table, technology_table, counterparty_table, total_volumes_per_year)
             output_folder = create_output_folder()
             export_project_risk_output(output_folder, top_projects, bottom_projects, country_table, technology_table, counterparty_table, df_counts, total_volumes_per_year)
+            export_model_config(output_folder,df_model)
             export_ghg_data(output_folder, df_project,df_default_rates,df_recovery_potential)
         else:
             if input_choice == 'excel':

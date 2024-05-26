@@ -4,7 +4,7 @@ import random
 import os
 import logging
 import argparse
-from datetime import date
+from datetime import date, datetime
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -84,17 +84,43 @@ def generate_data(num_projects, num_buckets, num_factors):
         data[f'offered_volume_year_{i}'] = np.where(i <= data['contract_duration'], np.random.randint(100000, 950001, num_projects), np.nan)
 
     # Risk factors and weights
+    weights = np.random.dirichlet(np.ones(num_factors) * 10, size=1)[0]  # Generate weights once
     for i in range(1, num_buckets + 1):
-        weights = np.random.dirichlet(np.ones(num_factors) * 10, size=num_projects)
         for j in range(1, num_factors + 1):
             data[f'risk_bucket_{i}_factor_{j}'] = np.random.randint(0, 11, num_projects)
-            data[f'risk_bucket_{i}_weight_{j}'] = weights[:, j-1]
+            data[f'risk_bucket_{i}_weight_{j}'] = [weights[j-1]] * num_projects  # Use the same weights for each project
 
     # Create a DataFrame
     df = pd.DataFrame(data)
     return df
 
-def write_to_file(df, default_rates, recovery_potential, output_format):
+def generate_model(num_buckets, num_factors):
+    """
+    Generate a model.
+
+    Args:
+        num_buckets (int): Number of risk buckets.
+        num_factors (int): Number of factors.
+
+    Returns:
+        df: DataFrame containing the generated model.
+    """
+    model_id = random.randint(1, 1000)
+    model_name = f"Model{model_id}"
+    model_last_saved = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    data = {
+        'model_id': [model_id],
+        'model_name': [model_name],
+        'number_of_risk_buckets': [num_buckets],
+        'number_of_risk_factors': [num_factors],
+        'model_last_saved': [model_last_saved]
+    }
+
+    df = pd.DataFrame(data)
+    return df
+
+def write_to_file(df, default_rates, recovery_potential, model_df, output_format):
     """
     Write data to file.
 
@@ -102,6 +128,7 @@ def write_to_file(df, default_rates, recovery_potential, output_format):
         df (DataFrame): DataFrame containing data to write.
         default_rates (dict): Dictionary containing default rates.
         recovery_potential (dict): Dictionary containing recovery potential.
+        model_df (DataFrame): DataFrame containing the model configuration.
         output_format (str): Output file format.
     """
 
@@ -116,6 +143,7 @@ def write_to_file(df, default_rates, recovery_potential, output_format):
         # Save DataFrames to csv files
         df_default_rates.to_csv(os.path.join('..', 'data', 'Default_Rates.csv'))
         df_recovery_potential.to_csv(os.path.join('..', 'data', 'Recovery_Potential.csv'))
+        model_df.to_csv(os.path.join('..', 'data', 'Model_Config.csv'), index=False)
     elif output_format == 'tsv':
         # Write the DataFrame to a TSV file
         df.to_csv(os.path.join('..', 'data', 'GHG_Data.tsv'), sep='\t', index=False)
@@ -123,6 +151,7 @@ def write_to_file(df, default_rates, recovery_potential, output_format):
         # Save DataFrames to tsv files
         df_default_rates.to_csv(os.path.join('..', 'data', 'Default_Rates.tsv'), sep='\t')
         df_recovery_potential.to_csv(os.path.join('..', 'data', 'Recovery_Potential.tsv'), sep='\t')
+        model_df.to_csv(os.path.join('..', 'data', 'Model_Config.tsv'), sep='\t', index=False)
     else:
         # Write the DataFrame to an Excel file
         with pd.ExcelWriter(os.path.join('..', 'data', 'GHG_Data.xlsx')) as writer:
@@ -131,6 +160,7 @@ def write_to_file(df, default_rates, recovery_potential, output_format):
             # Save DataFrames to Excel worksheets
             df_default_rates.to_excel(writer, sheet_name='Default Rates')
             df_recovery_potential.to_excel(writer, sheet_name='Recovery Potential')
+            model_df.to_excel(writer, sheet_name='Model Config', index=False)
 
 if __name__ == "__main__":
     try:
@@ -148,7 +178,9 @@ if __name__ == "__main__":
         num_factors = args.factors
 
         df = generate_data(num_projects, num_buckets, num_factors)
-        write_to_file(df, default_rates, recovery_potential, args.output)
+        model_df = generate_model(num_buckets, num_factors)
+
+        write_to_file(df, default_rates, recovery_potential, model_df, args.output)
 
         print(f"Generated {num_projects} projects with {num_buckets} risk buckets and {num_factors} factors and saved to {args.output.upper()} files in the '../data' directory.")
 
