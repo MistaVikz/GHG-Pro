@@ -75,51 +75,47 @@ The `project_risk.py` file performs the following steps to analyze the project r
 The function first calculates the end years for each project by adding the contract duration to the start year. It then creates a new DataFrame with the total offered volume and overall project delivery for each year, initializing these values to 0. The function then iterates over each project and each year of the project's contract duration. For each year, it adds the offered volume and overall project delivery for that year to the corresponding values in the total volumes by year DataFrame. Finally, the function resets the index of the total volumes by year DataFrame and renames the index column to 'Year'. The resulting DataFrame is returned by the function.
 
 ### Project Screening Tool
-
 The Project Screening Tool is a comprehensive Excel-based application designed to streamline the project screening process. The tool consists of three main components: Model Configuration, Project Screening, and Project Analysis.
 
 #### Configuring a Model
 The Project Screening Tool allows users to configure a model by entering the necessary information in the Model Config worksheet. This includes:
 
-- Model ID and name
+Model ID and name
 - Maximum number of risk buckets
 - Maximum number of risk factors for each bucket
 - Names of each risk bucket
-- Names and descriptions of each risk factor, along with their scoring rules
-- Once the model configuration is defined, users can save, edit, or delete different models as needed. To begin screening projects, the model configuration must be applied.
+- Names and descriptions of each risk factor, along with their scoring rules and weights (which must add up to 1 for each risk bucket)
 
+Once the model configuration is defined, users can save, edit, or delete different models as needed. To begin screening projects, the model configuration must be applied.
 The `ApplyModelConfig` subroutine is responsible for applying the model configuration to the Project Screening worksheet. It does this by:
 
 - Clearing any existing input values
 - Generating headers for the project data
 - Copying the model name, number of risk buckets, and number of risk factors from the Model Config worksheet to the Project Screening worksheet
 - Copying the names of each risk bucket, risk factor, and scoring rules from the Model Config worksheet to the Project Screening worksheet
+- This ensures that the Project Screening worksheet is properly configured and ready for use with the defined model configuration.
 
-This ensures that the Project Screening worksheet is properly configured and ready for use with the defined model configuration.
-
-### Screening Projects
+#### Screening Projects
 The Project Screening Tool allows users to screen projects by entering the necessary information in the Project Screening worksheet. This includes:
 
 - Project ID and name
 - Technology, country, and counterparty
 - Start year and contract duration
 - Offered volume for each year of the contract duration
-- Scores for each risk factor (between 0 and 10) and their corresponding weights (which must add up to 1)
+- Scores for each risk factor (between 0 and 10)
 
-Once the project information is entered, it must be saved to the Project Data worksheet. The `SaveProjectData` subroutine is responsible for validating the input data and saving it to the Project Data worksheet.
-
-The `SaveProjectData` subroutine performs the following tasks:
+Once the project information is entered, it must be saved to the Project Data worksheet. The `SaveProjectData` subroutine is responsible for validating the input data and saving it to the Project Data worksheet. It performs the following tasks:
 
 - Checks if a model has been applied before saving the project data
 - Validates the input data, including the project ID, name, contract duration, country, technology, counterparty, start year, and offered volumes
-- Validates the risk factors and their corresponding weights
+- Validates the risk factors
 - Saves the project data to the Project Data worksheet, including the project ID, name, contract duration, country, technology, counterparty, start year, screening date, and offered volumes
-- Saves the risk bucket factors and weights to the Project Data worksheet
+- Saves the risk bucket factors to the Project Data worksheet
 - Clears the input values in the Project Screening worksheet after saving the project data
 
 Projects can also be updated and deleted after they are saved.
 
-###Analyzing Projects
+### Analyzing Projects
 After screening all projects, the saved projects in the Project Data worksheet can be analyzed by the GHG Evaluation Program. The Analyze Model button in the Model Config worksheet prepares the saved projects for analysis.
 
 The `AnalyzeModel` subroutine is responsible for preparing the saved projects for analysis. It does this by:

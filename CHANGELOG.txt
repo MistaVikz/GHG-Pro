@@ -8,3 +8,4 @@
 1.3.4   2024/5/21   Remove datetime stamp from output files
 1.3.5   2024/5/22   Corrected Risk Exposure to mean Risk Shortfall.
 2.3.5   2024/5/25   Added the Project Screening Tool to define models and screen projects for analysis.
+2.4.5   2024/5/26   Moved weights generation in Project Screening tool to model configuration.
