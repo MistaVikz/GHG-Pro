@@ -175,30 +175,66 @@ class TestDisplayProjectRiskOutput(unittest.TestCase):
         self.assertEqual(output, "")
 
 class TestCheckDfFormat(unittest.TestCase):
-    def test_dataframes_with_correct_format(self):
-        df1 = pd.DataFrame({i: [1, 2, 3] for i in range(1, 11)}, index=['Investment', 'Speculative', 'C'])
-        df2 = pd.DataFrame({i: [4, 5, 6] for i in range(1, 11)}, index=['Investment', 'Speculative', 'C'])
-        self.assertTrue(check_df_format(df1, df2))
+    def setUp(self):
+        self.df_default_rates = pd.DataFrame(index=['Investment', 'Speculative', 'C'], columns=range(1, 11), data=0)
+        self.df_recovery_potential = pd.DataFrame(index=['Investment', 'Speculative', 'C'], columns=range(1, 11), data=0)
 
-    def test_dataframes_with_incorrect_shape(self):
-        df1 = pd.DataFrame({i: [1, 2, 3] for i in range(1, 11)}, index=['Investment', 'Speculative', 'C'])
-        df2 = pd.DataFrame({i: [4, 5] for i in range(1, 11)}, index=['Investment', 'Speculative'])
-        self.assertFalse(check_df_format(df1, df2))
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_dataframes_with_same_shape(self, mock_stdout):
+        self.assertTrue(check_df_format(self.df_default_rates, self.df_recovery_potential))
 
-    def test_dataframes_with_incorrect_row_names(self):
-        df1 = pd.DataFrame({i: [1, 2, 3] for i in range(1, 11)}, index=['Investment', 'Speculative', 'C'])
-        df2 = pd.DataFrame({i: [4, 5, 6] for i in range(1, 11)}, index=['X', 'Y', 'Z'])
-        self.assertFalse(check_df_format(df1, df2))
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_dataframes_with_different_shape(self, mock_stdout):
+        self.df_recovery_potential = pd.DataFrame(index=['Investment', 'Speculative', 'C'], columns=range(1, 12), data=0)
+        self.assertFalse(check_df_format(self.df_default_rates, self.df_recovery_potential))
 
-    def test_dataframes_with_incorrect_column_names(self):
-        df1 = pd.DataFrame({i: [1, 2, 3] for i in range(1, 11)}, index=['Investment', 'Speculative', 'C'])
-        df2 = pd.DataFrame({i: [4, 5, 6] for i in range(2, 12)}, index=['Investment', 'Speculative', 'C'])
-        self.assertFalse(check_df_format(df1, df2))
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_dataframes_with_incorrect_row_names(self, mock_stdout):
+        self.df_recovery_potential = pd.DataFrame(index=['Investment', 'Speculative', 'D'], columns=range(1, 11), data=0)
+        self.assertFalse(check_df_format(self.df_default_rates, self.df_recovery_potential))
 
-    def test_dataframes_with_negative_values(self):
-        df1 = pd.DataFrame({i: [1, 2, 3] for i in range(1, 11)}, index=['Investment', 'Speculative', 'C'])
-        df2 = pd.DataFrame({i: [-1, -2, -3] for i in range(1, 11)}, index=['Investment', 'Speculative', 'C'])
-        self.assertFalse(check_df_format(df1, df2))
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_dataframes_with_incorrect_column_names(self, mock_stdout):
+        self.df_recovery_potential = pd.DataFrame(index=['Investment', 'Speculative', 'C'], columns=range(1, 12), data=0)
+        self.assertFalse(check_df_format(self.df_default_rates, self.df_recovery_potential))
+
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_dataframes_with_invalid_values(self, mock_stdout):
+        self.df_default_rates.loc['Investment', 1] = -1
+        self.assertFalse(check_df_format(self.df_default_rates, self.df_recovery_potential))
+
+class TestValidModel(unittest.TestCase):
+
+    def setUp(self):
+        self.risk_bucket_count = 2
+        self.risk_factor_count = 2
+        self.required_columns = ['model_id', 'model_name', 'num_buckets', 'num_factors', 'last_saved']
+        for i in range(1, self.risk_bucket_count + 1):
+            self.required_columns.append(f'risk_bucket_{i}_name')
+            for j in range(1, self.risk_factor_count + 1):
+                self.required_columns.append(f'risk_bucket_{i}_factor_{j}_name')
+                self.required_columns.append(f'risk_bucket_{i}_factor_{j}_rules')
+
+    def test_valid_model(self):
+        data = {col: [0] for col in self.required_columns}
+        df_model = pd.DataFrame(data)
+        self.assertTrue(valid_model(df_model, self.risk_bucket_count, self.risk_factor_count))
+
+    def test_invalid_model_missing_columns(self):
+        data = {col: [0] for col in self.required_columns[:-1]}
+        df_model = pd.DataFrame(data)
+        self.assertFalse(valid_model(df_model, self.risk_bucket_count, self.risk_factor_count))
+
+    def test_invalid_model_extra_columns(self):
+        data = {col: [0] for col in self.required_columns}
+        data['extra_column'] = [0]
+        df_model = pd.DataFrame(data)
+        self.assertFalse(valid_model(df_model, self.risk_bucket_count, self.risk_factor_count))
+
+    def test_invalid_model_multiple_rows(self):
+        data = {col: [0, 0] for col in self.required_columns}
+        df_model = pd.DataFrame(data)
+        self.assertFalse(valid_model(df_model, self.risk_bucket_count, self.risk_factor_count))
 
 if __name__ == '__main__':
     unittest.main()

@@ -54,9 +54,9 @@ if __name__ == "__main__":
             if input_choice == 'excel':
                 print("Data not loaded properly from GHG_Data.xlsx")
             elif input_choice == 'tsv':
-                print("Data not loaded properly from GHG_Data.tsv, Default_Rates.tsv, and/or Recovery_Potential.tsv")
+                print("Data not loaded properly from GHG_Data.tsv, Default_Rates.tsv, and/or Recovery_Potential.tsv, and/or Model_Config.tsv")
             else:
-                print("Data not loaded properly from GHG_Data.csv, Default_Rates.csv, and/or Recovery_Potential.csv")
+                print("Data not loaded properly from GHG_Data.csv, Default_Rates.csv, and/or Recovery_Potential.csv and/or Model_Config.csv")
                 
     except FileNotFoundError as e:
         logging.error(f"File not found: {str(e)}")

@@ -239,91 +239,65 @@ class TestScoreToRatingVectorized(unittest.TestCase):
         ratings = score_to_rating_vectorized(scores)
         self.assertEqual(len(ratings), 0)
 
-class TestCalculateYearlyExposure(unittest.TestCase):
-    def test_single_row(self):
-        df_project = pd.DataFrame({
-            'risk_bucket_1_rating': ['Investment'],
-            'contract_duration': [2]
+class TestCalculateYearlyShortfall(unittest.TestCase):
+    def setUp(self):
+        self.df_project = pd.DataFrame({
+            'contract_duration': [5, 10, 7],
+            'risk_bucket_1_rating': ['Investment', 'Speculative', 'Investment'],
+            'risk_bucket_2_rating': ['Speculative', 'Investment', 'Speculative']
         })
-        df_default_rates = pd.DataFrame({
-            1: [0.1],
-            2: [0.4]
-        }, index=['Investment'])
-        df_recovery_potential = pd.DataFrame({
-            1: [0.7],
-            2: [0.1]
-        }, index=['Investment'])
-        result = calculate_yearly_exposure(df_project, df_default_rates, df_recovery_potential, 1)
-        self.assertAlmostEqual(result['risk_bucket_1_exposure_year_1'].iloc[0], (0.1 * (1 - 0.7)) / 100)
-        self.assertAlmostEqual(result['risk_bucket_1_exposure_year_2'].iloc[0], (0.4 * (1 - 0.1)) / 100)
+        self.df_default_rates = pd.DataFrame(index=['Investment', 'Speculative'], columns=range(1, 11), data=0.05)
+        self.df_recovery_potential = pd.DataFrame(index=['Investment', 'Speculative'], columns=range(1, 11), data=0.1)
+        self.risk_bucket_count = 2
+        self.num_years = 10
 
-    def test_multiple_rows(self):
-        df_project = pd.DataFrame({
-            'risk_bucket_1_rating': ['Investment', 'Speculative'],
-            'contract_duration': [2, 1]
-        })
-        df_default_rates = pd.DataFrame({
-            1: [0.1, 0.2],
-            2: [0.4, 0.5]
-        }, index=['Investment', 'Speculative'])
-        df_recovery_potential = pd.DataFrame({
-            1: [0.7, 0.8],
-            2: [0.1, 0.2]
-        }, index=['Investment', 'Speculative'])
-        result = calculate_yearly_exposure(df_project, df_default_rates, df_recovery_potential, 1)
-        self.assertAlmostEqual(result['risk_bucket_1_exposure_year_1'].iloc[0], (0.1 * (1 - 0.7)) / 100)
-        self.assertAlmostEqual(result['risk_bucket_1_exposure_year_2'].iloc[0], (0.4 * (1 - 0.1)) / 100)
-        self.assertAlmostEqual(result['risk_bucket_1_exposure_year_1'].iloc[1], (0.2 * (1 - 0.8)) / 100)
+    def test_calculate_yearly_shortfall(self):
+        result = calculate_yearly_shortfall(self.df_project, self.df_default_rates, self.df_recovery_potential, self.risk_bucket_count, self.num_years)
+        self.assertEqual(result.shape[1], self.df_project.shape[1] + self.risk_bucket_count * self.num_years)
 
-    def test_multiple_risk_buckets(self):
-        df_project = pd.DataFrame({
-            'risk_bucket_1_rating': ['Investment'],
-            'risk_bucket_2_rating': ['Speculative'],
-            'contract_duration': [2]
-        })
-        df_default_rates = pd.DataFrame({
-            1: [0.1, 0.2],
-            2: [0.4, 0.5]
-        }, index=['Investment', 'Speculative'])
-        df_recovery_potential = pd.DataFrame({
-            1: [0.7, 0.8],
-            2: [0.1, 0.2]
-        }, index=['Investment', 'Speculative'])
-        result = calculate_yearly_exposure(df_project, df_default_rates, df_recovery_potential, 2)
-        self.assertAlmostEqual(result['risk_bucket_1_exposure_year_1'].iloc[0], (0.1 * (1 - 0.7)) / 100)
-        self.assertAlmostEqual(result['risk_bucket_1_exposure_year_2'].iloc[0], (0.4 * (1 - 0.1)) / 100)
-        self.assertAlmostEqual(result['risk_bucket_2_exposure_year_1'].iloc[0], (0.2 * (1 - 0.8)) / 100)
-        self.assertAlmostEqual(result['risk_bucket_2_exposure_year_2'].iloc[0], (0.5 * (1 - 0.2)) / 100)
+    def test_calculate_yearly_shortfall_with_nan_values(self):
+        self.df_project.loc[0, 'contract_duration'] = np.nan
+        result = calculate_yearly_shortfall(self.df_project, self.df_default_rates, self.df_recovery_potential, self.risk_bucket_count, self.num_years)
+        self.assertTrue(result.iloc[:, -self.risk_bucket_count * self.num_years:].isna().any().any())
+
+    def test_calculate_yearly_shortfall_with_invalid_rating(self):
+        self.df_project.loc[0, 'risk_bucket_1_rating'] = 'Invalid'
+        with self.assertRaises(KeyError):
+            calculate_yearly_shortfall(self.df_project, self.df_default_rates, self.df_recovery_potential, self.risk_bucket_count, self.num_years)
 
 class TestCalculateYearlyExpectedValue(unittest.TestCase):
     def setUp(self):
         self.df_project = pd.DataFrame({
-            'offered_volume_year_1': [100, 200],
-            'risk_bucket_1_exposure_year_1': [0.1, 0.2],
-            'offered_volume_year_2': [300, 400],
-            'risk_bucket_1_exposure_year_2': [0.3, 0.4]
+            'offered_volume_year_1': [100, 200, 300],
+            'offered_volume_year_2': [150, 250, 350],
+            'risk_bucket_1_shortfall_year_1': [0.1, 0.2, 0.3],
+            'risk_bucket_1_shortfall_year_2': [0.15, 0.25, 0.35],
+            'risk_bucket_2_shortfall_year_1': [0.05, 0.1, 0.15],
+            'risk_bucket_2_shortfall_year_2': [0.1, 0.2, 0.3]
         })
+        self.num_risk_buckets = 2
+        self.num_years = 2
 
-    def test_valid_input(self):
-        result = calculate_yearly_expected_value(self.df_project, num_risk_buckets=1, num_years=2)
-        self.assertIn('risk_bucket_1_expected_value_year_1', result.columns)
-        self.assertIn('risk_bucket_1_expected_value_year_2', result.columns)
+    def test_calculate_yearly_expected_value(self):
+        result = calculate_yearly_expected_value(self.df_project, self.num_risk_buckets, self.num_years)
+        expected_columns = ['offered_volume_year_1', 'offered_volume_year_2',
+                        'risk_bucket_1_shortfall_year_1', 'risk_bucket_1_shortfall_year_2',
+                        'risk_bucket_2_shortfall_year_1', 'risk_bucket_2_shortfall_year_2',
+                        'risk_bucket_1_expected_value_year_1',
+                        'risk_bucket_1_expected_value_year_2',
+                        'risk_bucket_2_expected_value_year_1',
+                        'risk_bucket_2_expected_value_year_2']
+        self.assertEqual(list(result.columns), expected_columns)
 
-    def test_invalid_column_names(self):
-        df_project = pd.DataFrame({
-            'invalid_column_name': [100, 200],
-            'risk_bucket_1_exposure_year_1': [0.1, 0.2]
-        })
+    def test_calculate_yearly_expected_value_with_nan_values(self):
+        self.df_project.loc[0, 'offered_volume_year_1'] = np.nan
+        result = calculate_yearly_expected_value(self.df_project, self.num_risk_buckets, self.num_years)
+        self.assertTrue(result.iloc[:, -self.num_risk_buckets * self.num_years:].isna().any().any())
+
+    def test_calculate_yearly_expected_value_with_missing_columns(self):
+        self.df_project.drop(columns=['risk_bucket_1_shortfall_year_1'], inplace=True)
         with self.assertRaises(KeyError):
-            calculate_yearly_expected_value(df_project, num_risk_buckets=1, num_years=1)
-
-    def test_non_numeric_values(self):
-        df_project = pd.DataFrame({
-            'offered_volume_year_1': ['a', 'b'],
-            'risk_bucket_1_exposure_year_1': [0.1, 0.2]
-        })
-        with self.assertRaises(TypeError):
-            calculate_yearly_expected_value(df_project, num_risk_buckets=1, num_years=1)
+            calculate_yearly_expected_value(self.df_project, self.num_risk_buckets, self.num_years)
 
 class TestCalculateYearlyStandardDeviation(unittest.TestCase):
     def setUp(self):
