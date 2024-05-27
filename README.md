@@ -1,12 +1,12 @@
-# GHG Risk Evaluation
+# GHG_Pro
 
 ### Introduction
 
-The GHG Risk Evaluation project is a data-driven tool designed to estimate the potential greenhouse gas (GHG) reductions of various projects, taking into account the risks associated with their implementation. By leveraging risk screening data, this project provides a more realistic assessment of a project's likely impact on reducing GHG emissions, helping stakeholders make more informed decisions and prioritize initiatives that are most likely to succeed.
+The GHG_Pro project is a data-driven tool designed to estimate the potential greenhouse gas (GHG) reductions of various projects, taking into account the risks associated with their implementation. By leveraging risk screening data, this project provides a more realistic assessment of a project's likely impact on reducing GHG emissions, helping stakeholders make more informed decisions and prioritize initiatives that are most likely to succeed.
 
 ### Overview
 
-The GHG Risk Evaluation project is a data-driven tool designed to estimate the potential greenhouse gas (GHG) reductions of various projects. The project takes into account the risks associated with project implementation, providing a more realistic assessment of a project's likely impact on reducing GHG emissions.
+The GHG_Pro project is a data-driven tool designed to estimate the potential greenhouse gas (GHG) reductions of various projects. The project takes into account the risks associated with project implementation, providing a more realistic assessment of a project's likely impact on reducing GHG emissions.
 
 #### Key Features
 
@@ -22,7 +22,7 @@ The GHG Risk Evaluation project is a data-driven tool designed to estimate the p
 
 ### Requirements
 
-To run the GHG Risk Evaluation project, you'll need to install the required dependencies listed in the `requirements.txt` file. You can do this by running the following command in your terminal:
+To run the GHG_Pro project, you'll need to install the required dependencies listed in the `requirements.txt` file. You can do this by running the following command in your terminal:
 pip install -r requirements.txt
 
 This will install all the necessary dependencies, including [list some of the key dependencies, e.g., pandas, numpy, etc.].
@@ -31,7 +31,7 @@ Note: Make sure you have Python [3.0] or higher installed on your system.
 
 ### Usage
 
-To run the GHG Risk Evaluation project, navigate to the main directory and execute the project_risk.py file using Python:
+To run the GHG_Pro project, navigate to the main directory and execute the project_risk.py file using Python:
 python project_risk.py
 
 This will read in the data and perform the analysis. By default, it will look for an Excel file named GHG_Data.xlsx in the data directory. However, you can specify the input file format as either 'excel', 'csv', or 'tsv' by passing an optional command line argument, like this:
@@ -175,14 +175,34 @@ Investment	0	0.5	0.67	0.75	0.8	0.83	0.86	0.88	0.89	0.9
 Speculative	0	0	0.03	0.5	0.6	0.67	0.71	0.75	0.78	0.8
 C	0	0	0	0	0.08	0.24	0.34	0.43	0.49	0.54
 
-#### Model Config
+### Model Config
 This sheet should contain the model configuration data with the following columns:
 
 - model_id: Unique identifier for the model
 - model_name: Name of the model
-- number_of_risk_buckets: Number of risk buckets in the model
-- number_of_risk_factors: Number of risk factors in the model
-- model_last_saved: Date the model was last saved
+- num_buckets: Number of risk buckets in the model
+- num_factors: Number of risk factors in the model
+- last_saved: Date the model was last saved
+- risk_bucket_1_name: Name of the first risk bucket
+- risk_bucket_1_factor_1_name: Name of the first factor in the first risk bucket
+- risk_bucket_1_factor_1_rules: Rules for the first factor in the first risk bucket
+- risk_bucket_1_factor_2_name: Name of the second factor in the first risk bucket
+- risk_bucket_1_factor_2_rules: Rules for the second factor in the first risk bucket
+...
+- risk_bucket_2_name: Name of the second risk bucket
+- risk_bucket_2_factor_1_name: Name of the first factor in the second risk bucket
+- risk_bucket_2_factor_1_rules: Rules for the first factor in the second risk bucket
+- risk_bucket_2_factor_2_name: Name of the second factor in the second risk bucket
+- risk_bucket_2_factor_2_rules: Rules for the second factor in the second risk bucket
+...
+...
+- risk_bucket_num_buckets_name: Name of the last risk bucket
+- risk_bucket_num_buckets_factor_1_name: Name of the first factor in the last risk bucket
+- risk_bucket_num_buckets_factor_1_rules: Rules for the first factor in the last risk bucket
+- risk_bucket_num_buckets_factor_num_factors_name: Name of the last factor in the last risk bucket
+- risk_bucket_num_buckets_factor_num_factors_rules: Rules for the last factor in the last risk bucket
+
+Note: The actual column names will depend on the number of risk buckets and factors in the model. The above list is just an example.
 
 #### Data Processing and Validation
 The data from the 4 sheets is loaded and processed by the `load_and_process_data` function, which:
@@ -217,8 +237,16 @@ The `check_df_format` function checks if two dataframes, df_default_rates and df
 
 If any of these conditions are not met, the function returns False. Otherwise, it returns True.
 
+The `valid_model` function checks if df_model contains a valid model configuration. It checks the following conditions:
+
+- There is a model id, model name, number of risk buckets, number of risk factors and last saved column.
+- There are risk bucket names, risk bucket factor names, and risk bucket factor rules for the correct number of risk buckets and factors
+- There is only one configuration in the data frame.
+
+If any of these conditions are not me, the function returns False. Otherwise, it returns True.
+
 ### Output
-After running the GHG Risk Evaluation project, three output files will be generated:
+After running the GHG_Pro project, three output files will be generated:
 
 - GHG_Data_Simulation.xlsx: This file contains the detailed analysis output for every project that was screened.
 - Project_Risk_Summary_Data.xlsx: This file summarizes the simulation results by country, counterparty, technology, and by year.
@@ -227,7 +255,7 @@ After running the GHG Risk Evaluation project, three output files will be genera
 Both output files will be saved to a timestamped subfolder in the /output directory. The subfolder name will reflect the date and time when the analysis was run, allowing you to easily keep track of different runs and compare results.
 
 ### License and Credits
-This GHG Risk Evaluation project is released under the Creative Commons Attribution 4.0 International License. This project would not be possible without the following sources:
+This GHG_Pro project is released under the Creative Commons Attribution 4.0 International License. This project would not be possible without the following sources:
 
 - The process of converting risk scores to ratings was made possible by the European Bank for Reconstruction and Development (EBRD).
 - The default rate table is public information sourced from Moody's.
@@ -238,6 +266,6 @@ We acknowledge the essential contributions of these organizations and individual
 
 ### Conclusion
 
-The GHG Risk Evaluation project is a powerful tool for estimating the potential greenhouse gas reductions of various projects. By taking into account the risks associated with project implementation, this project provides a more realistic assessment of a project's likely impact on reducing GHG emissions. We hope that this project will be useful for stakeholders seeking to make informed decisions about investments in GHG reduction projects.
+The GHG_Pro project is a powerful tool for estimating the potential greenhouse gas reductions of various projects. By taking into account the risks associated with project implementation, this project provides a more realistic assessment of a project's likely impact on reducing GHG emissions. We hope that this project will be useful for stakeholders seeking to make informed decisions about investments in GHG reduction projects.
 
-Thank you for considering the GHG Risk Evaluation project.
+Thank you for considering the GHG_Pro project.

@@ -112,10 +112,20 @@ def generate_model(num_buckets, num_factors):
     data = {
         'model_id': [model_id],
         'model_name': [model_name],
-        'number_of_risk_buckets': [num_buckets],
-        'number_of_risk_factors': [num_factors],
-        'model_last_saved': [model_last_saved]
+        'num_buckets': [num_buckets],
+        'num_factors': [num_factors],
+        'last_saved': [model_last_saved]
     }
+
+    # Add risk bucket names
+    for i in range(1, num_buckets + 1):
+        data[f'risk_bucket_{i}_name'] = [f'Risk Bucket {i}']
+
+    # Add factor names and rules for each risk bucket
+    for i in range(1, num_buckets + 1):
+        for j in range(1, num_factors + 1):
+            data[f'risk_bucket_{i}_factor_{j}_name'] = [f'Factor {j}']
+            data[f'risk_bucket_{i}_factor_{j}_rules'] = [f'Rules for Factor {j}']
 
     df = pd.DataFrame(data)
     return df
@@ -179,7 +189,6 @@ if __name__ == "__main__":
 
         df = generate_data(num_projects, num_buckets, num_factors)
         model_df = generate_model(num_buckets, num_factors)
-
         write_to_file(df, default_rates, recovery_potential, model_df, args.output)
 
         print(f"Generated {num_projects} projects with {num_buckets} risk buckets and {num_factors} factors and saved to {args.output.upper()} files in the '../data' directory.")

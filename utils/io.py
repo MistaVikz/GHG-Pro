@@ -473,3 +473,34 @@ def check_df_format(df_default_rates, df_recovery_potential):
         return False
 
     return True
+
+def valid_model(df_model, risk_bucket_count, risk_factor_count):
+    """
+    Validate the model configuration data.
+
+    Parameters:
+    df_model (DataFrame): DataFrame containing the model configuration data.
+    risk_bucket_count (int): Number of risk buckets in the model.
+    risk_factor_count (int): Number of risk factors in the model.
+
+    Returns:
+    bool: True if the model configuration data is valid, False otherwise.
+
+    """
+    # Calculate the required columns
+    required_columns = ['model_id', 'model_name', 'num_buckets', 'num_factors', 'last_saved']
+    for i in range(1, risk_bucket_count + 1):
+        required_columns.append(f'risk_bucket_{i}_name')
+        for j in range(1, risk_factor_count + 1):
+            required_columns.append(f'risk_bucket_{i}_factor_{j}_name')
+            required_columns.append(f'risk_bucket_{i}_factor_{j}_rules')
+
+    # Check if all required columns are present
+    if set(required_columns) != set(df_model.columns):
+        return False
+
+    # Check if there is only one row in the dataframe
+    if df_model.shape[0] != 1:
+        return False
+
+    return True
