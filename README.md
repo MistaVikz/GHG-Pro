@@ -74,11 +74,11 @@ The `project_risk.py` file performs the following steps to analyze the project r
 10. `calculate_total_volumes_by_year(df_project):` This function calculates the total offered volume and overall project delivery for each calendar year in the project DataFrame. 
 The function first calculates the end years for each project by adding the contract duration to the start year. It then creates a new DataFrame with the total offered volume and overall project delivery for each year, initializing these values to 0. The function then iterates over each project and each year of the project's contract duration. For each year, it adds the offered volume and overall project delivery for that year to the corresponding values in the total volumes by year DataFrame. Finally, the function resets the index of the total volumes by year DataFrame and renames the index column to 'Year'. The resulting DataFrame is returned by the function.
 
-### Project Screening Tool
-The Project Screening Tool is a comprehensive Excel-based application designed to streamline the project screening process. The tool consists of three main components: Model Configuration, Project Screening, and Project Analysis.
+### GHG_Pro.xlsx
+The GHG_Pro.xlsx is a comprehensive Excel-based application designed to streamline the project screening process. The tool consists of three main components: Model Configuration, Project Screening, and Project Analysis.
 
 #### Configuring a Model
-The Project Screening Tool allows users to configure a model by entering the necessary information in the Model Config worksheet. This includes:
+The GHG_Pro.xlsx allows users to configure a model by entering the necessary information in the Model Config worksheet. This includes:
 
 Model ID and name
 - Maximum number of risk buckets
@@ -96,7 +96,7 @@ The `ApplyModelConfig` subroutine is responsible for applying the model configur
 - This ensures that the Project Screening worksheet is properly configured and ready for use with the defined model configuration.
 
 #### Screening Projects
-The Project Screening Tool allows users to screen projects by entering the necessary information in the Project Screening worksheet. This includes:
+GHG_Pro.xlsx allows users to screen projects by entering the necessary information in the Project Screening worksheet. This includes:
 
 - Project ID and name
 - Technology, country, and counterparty
@@ -115,20 +115,19 @@ Once the project information is entered, it must be saved to the Project Data wo
 
 Projects can also be updated and deleted after they are saved.
 
-### Analyzing Projects
-After screening all projects, the saved projects in the Project Data worksheet can be analyzed by the GHG Evaluation Program. The Analyze Model button in the Model Config worksheet prepares the saved projects for analysis.
+#### Analyzing Projects
+After screening all projects, the saved projects in the Project Data worksheet can be analyzed by GHG_Pro.py. The Analyze Model button in the Model Config worksheet prepares the saved projects for analysis.
 
-The `AnalyzeModel` subroutine is responsible for preparing the saved projects for analysis. It does this by:
+The AnalyzeModel subroutine is responsible for preparing the saved projects for analysis. It does this by:
 
-- Creating a new workbook named "GHG_Data.xlsx" in the "/data" directory
-- Copying the Project Data worksheet to the new workbook
-- Copying the Default Rates and Recovery Potential ranges from the Model Config worksheet to the new workbook
-- Copying the Model Config data to the new workbook
-- Saving the new workbook
-
+Creating a new workbook named "GHG_Data.xlsx" in the "/data" directory
+Copying the Project Data worksheet to the new workbook
+Copying the Default Rates and Recovery Potential ranges from the Model Config worksheet to the new workbook
+Copying the Model Config data to the new workbook
+Saving the new workbook
 Before creating the new workbook, the subroutine checks if a file named "GHG_Data.xlsx" already exists in the "/data" directory. If it does, it warns the user and asks for confirmation before proceeding.
 
-Once the new workbook is created, it is ready to be analyzed by the GHG Evaluation Program.
+Once the new workbook is created, it is ready to be analyzed by the GHG_Pro.py. GHG_Pro.py is called to analyze the projects in GHG_Data.xls. This Python script uses xlwings to interact with the Excel file and perform the analysis. The results of the analysis are then saved to the output directory
 
 ### Data and Inputs
 This project either requires a single excel input file, GHG_Data.xlsx, located in the data directory, or 4 csv/tsv files (ex: GHG_Data.csv, Default_Rates.csv, Recovery_Potential.csv, Model_Config.csv). The file(s) need to have the following organization:

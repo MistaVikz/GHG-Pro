@@ -8,15 +8,8 @@ NUM_YEARS = 10
 
 logging.basicConfig(level=logging.INFO)
 
-if __name__ == "__main__":
+def main(input_choice='excel', display_output=True):
     try:
-        parser = argparse.ArgumentParser()
-        parser.add_argument('-i', '--input', choices=['excel', 'csv', 'tsv'], default='excel', help='Input file format')
-        parser.add_argument('-d', '--display', type=str, choices=['on', 'off'], default='on', help='Display console output')
-        args = parser.parse_args()
-        input_choice = args.input
-        display_output = args.display == 'on'
-
         risk_bucket_count, risk_factor_count, df_project, df_default_rates, df_recovery_potential, df_model = load_and_process_data(input_choice)
         if valid_project_data(df_project, risk_bucket_count, risk_factor_count) and check_df_format(df_default_rates, df_recovery_potential) and valid_model(df_model, risk_bucket_count, risk_factor_count):        
             # Calculate Risk Bucket Risk Scores and Ratings for each risk bucket 
@@ -69,3 +62,10 @@ if __name__ == "__main__":
     except Exception as e:
         logging.error(f"An unexpected error occurred: {str(e)}")
         raise
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-i', '--input', choices=['excel', 'csv', 'tsv'], default='excel', help='Input file format')
+    parser.add_argument('-d', '--display', type=str, choices=['on', 'off'], default='on', help='Display console output')
+    args = parser.parse_args()
+    main(args.input, args.display == 'on')

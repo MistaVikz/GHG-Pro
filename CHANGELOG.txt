@@ -12,3 +12,6 @@
 2.5.5   2024/5/26   Updated generate_project_risk_data.py and project_risk.py to incorporate the weights, and model config changes in the Project Screening Tool.
 2.6.5   2024/5/27   Added new model configuration data. Renamed projects GHG_Pro.
 2.6.6   2024/5/27   Added unit tests.
+2.6.7   2024/5/27   Updated Requirements.
+3.6.7   2024/5/28   GHG_Pro.xlsx now directly calls GHG_Pro.py to perform the analysis using xlwings. Regular use of GHG_Pro.py is unaffected by this change.
+3.6.8   2024/5/28   Bug fixes to ensure compatibility with Office 365.
