@@ -497,10 +497,12 @@ def valid_model(df_model, risk_bucket_count, risk_factor_count):
 
     # Check if all required columns are present
     if set(required_columns) != set(df_model.columns):
+        print("Error: Not all required columns are present.")
         return False
 
     # Check if there is only one row in the dataframe
     if df_model.shape[0] != 1:
+        print("Error: There should be only one row in the dataframe.")
         return False
 
     return True

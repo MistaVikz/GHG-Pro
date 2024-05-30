@@ -11,6 +11,7 @@ logging.basicConfig(level=logging.INFO)
 def main(input_choice='excel', display_output=True):
     try:
         risk_bucket_count, risk_factor_count, df_project, df_default_rates, df_recovery_potential, df_model = load_and_process_data(input_choice)
+
         if valid_project_data(df_project, risk_bucket_count, risk_factor_count) and check_df_format(df_default_rates, df_recovery_potential) and valid_model(df_model, risk_bucket_count, risk_factor_count):        
             # Calculate Risk Bucket Risk Scores and Ratings for each risk bucket 
             df_project = calculate_risk_bucket_scores(df_project,risk_bucket_count,risk_factor_count) 
