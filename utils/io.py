@@ -7,12 +7,12 @@ from openpyxl import Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.styles import Font, Border, Side, Alignment, PatternFill
 
-def load_and_process_data(input_choice='excel'):
+def load_and_process_data(input_file='GHG_Data.xlsx'):
     """
-    Load and process data from Excel file or CSV/TSV files.
+    Load and process data from Excel file.
 
     Parameters:
-    input_choice (str): The format of the input data. Default is 'excel'.
+    input_file (str): The path to the input Excel file. Default is 'GHG_Data.xlsx'.
 
     Returns:
     num_buckets (int): The number of risk buckets.
@@ -24,41 +24,12 @@ def load_and_process_data(input_choice='excel'):
 
     Notes:
     This function assumes that the input Excel file contains four sheets named 'Project Data', 'Default Rates', 'Recovery Potential', and 'Model Config'.
-    If input_choice is 'csv' or 'tsv', it assumes that there are four separate files named 'GHG_Data.csv', 'Default_Rates.csv', 'Recovery_Potential.csv', and 'Model_Config.csv' or 'GHG_Data.tsv', 'Default_Rates.tsv', 'Recovery_Potential.tsv', and 'Model_Config.tsv' respectively.
     """
-    if input_choice == 'excel':
-        # Load Data
-        current_dir = os.path.dirname(__file__)
-        data_dir = os.path.join(current_dir, '..', 'data')
-        file_path = os.path.join(data_dir, 'GHG_Data.xlsx')
-
-        df_project = pd.read_excel(file_path, sheet_name='Project Data')  
-        df_default_rates = pd.read_excel(file_path, sheet_name='Default Rates')
-        df_recovery_potential = pd.read_excel(file_path, sheet_name='Recovery Potential')
-        df_model = pd.read_excel(file_path, sheet_name='Model Config')
-
-    elif input_choice == 'csv':
-        # Load Data
-        current_dir = os.path.dirname(__file__)
-        data_dir = os.path.join(current_dir, '..', 'data')
-
-        df_project = pd.read_csv(os.path.join(data_dir, 'GHG_Data.csv'))  
-        df_default_rates = pd.read_csv(os.path.join(data_dir, 'Default_Rates.csv'))
-        df_recovery_potential = pd.read_csv(os.path.join(data_dir, 'Recovery_Potential.csv'))
-        df_model = pd.read_csv(os.path.join(data_dir, 'Model_Config.csv'))
-
-    elif input_choice == 'tsv':
-        # Load Data
-        current_dir = os.path.dirname(__file__)
-        data_dir = os.path.join(current_dir, '..', 'data')
-
-        df_project = pd.read_csv(os.path.join(data_dir, 'GHG_Data.tsv'), sep='\t')  
-        df_default_rates = pd.read_csv(os.path.join(data_dir, 'Default_Rates.tsv'), sep='\t')
-        df_recovery_potential = pd.read_csv(os.path.join(data_dir, 'Recovery_Potential.tsv'), sep='\t')
-        df_model = pd.read_csv(os.path.join(data_dir, 'Model_Config.tsv'), sep='\t')
-
-    else:
-        raise ValueError("Invalid input choice. Please choose 'excel', 'csv', or 'tsv'.")
+    # Load Data
+    df_project = pd.read_excel(input_file, sheet_name='Project Data')  
+    df_default_rates = pd.read_excel(input_file, sheet_name='Default Rates')
+    df_recovery_potential = pd.read_excel(input_file, sheet_name='Recovery Potential')
+    df_model = pd.read_excel(input_file, sheet_name='Model Config')
 
     # Set index for default rates and recovery potential dataframes
     df_default_rates = df_default_rates.set_index('Unnamed: 0')
@@ -103,7 +74,7 @@ def create_output_folder():
 
     return folder_name
 
-def export_ghg_data(output_folder,df_project, df_default_rates, df_recovery_potential):
+def export_ghg_data(output_folder, df_project, df_default_rates, df_recovery_potential, df_model):
     """
     Export GHG data to an Excel file.
 
@@ -111,9 +82,10 @@ def export_ghg_data(output_folder,df_project, df_default_rates, df_recovery_pote
     df_project (pandas.DataFrame): A DataFrame containing project data.
     df_default_rates (pandas.DataFrame): A DataFrame containing default rates data.
     df_recovery_potential (pandas.DataFrame): A DataFrame containing recovery potential data.
+    df_model (pandas.DataFrame): A DataFrame containing model configuration data.
 
     Notes:
-    This function exports the input DataFrames to three separate worksheets in the 'GHG_Data.xlsx' file.
+    This function exports the input DataFrames to four separate worksheets in the 'GHG_Data.xlsx' file.
     The 'Default Rates' and 'Recovery Potential' worksheets include "Investment", "Speculative", and "C" next to the values.
     """
     # Create a new workbook for GHG_Data.xlsx
@@ -184,23 +156,9 @@ def export_ghg_data(output_folder,df_project, df_default_rates, df_recovery_pote
     for cell in ws["1:1"]:
         cell.font = Font(bold=True, underline='single')
 
-    # Save simulation output
-    wb.save(f"{output_folder}/GHG_Data_Simulation.xlsx")
-
-def export_model_config(output_folder, df_model):
-    """
-    Export model configuration to an Excel file.
-
-    Parameters:
-    df_model (pandas.DataFrame): A DataFrame containing model configuration data.
-
-    Notes:
-    This function exports the input DataFrame to the 'Model_Config.xlsx' file.
-    """
-    # Create a new workbook for Model_Config.xlsx
-    wb = Workbook()
-    ws = wb.active
-    ws.title = 'Model Config'
+    # Write df_model to the Model Config worksheet
+    wb.create_sheet('Model Config')
+    ws = wb['Model Config']
 
     # Write df_model to the worksheet
     for row in dataframe_to_rows(df_model, index=False):
@@ -220,8 +178,8 @@ def export_model_config(output_folder, df_model):
     for cell in ws["1:1"]:
         cell.font = Font(bold=True, underline='single')
 
-    # Save model config
-    wb.save(f"{output_folder}/Model_Config.xlsx")
+    # Save simulation output
+    wb.save(f"{output_folder}/GHG_Data_Simulation.xlsx")
 
 def export_project_risk_output(output_folder, top_projects, bottom_projects, country_table, technology_table, counterparty_table, df_counts, total_volumes_per_year):
     """

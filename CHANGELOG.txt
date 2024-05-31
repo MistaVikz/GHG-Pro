@@ -15,4 +15,5 @@
 2.6.7   2024/5/27   Updated Requirements.
 3.6.7   2024/5/28   GHG_Pro.xlsx now directly calls GHG_Pro.py to perform the analysis using xlwings. Regular use of GHG_Pro.py is unaffected by this change.
 3.6.8   2024/5/28   Bug fixes to ensure compatibility with Office 365.
-3.6.9   2024/5/30   Improved Data Validation both in excel and python
+3.6.9   2024/5/30   Improved Data Validation both in excel and python.
+3.7.9   2024/5/31   Removed input support for CSV,TSV. Output now puts the model configuration in with the simulation results.

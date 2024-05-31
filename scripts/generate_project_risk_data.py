@@ -34,7 +34,6 @@ def parse_args():
     parser.add_argument('-p', '--projects', type=int, default=100, help='Number of projects')
     parser.add_argument('-b', '--buckets', type=int, default=5, help='Number of risk buckets')
     parser.add_argument('-f', '--factors', type=int, default=5, help='Number of factors')
-    parser.add_argument('-o', '--output', choices=['excel', 'csv', 'tsv'], default='excel', help='Output file format')
     return parser.parse_args()
 
 def generate_data(num_projects, num_buckets, num_factors):
@@ -130,7 +129,7 @@ def generate_model(num_buckets, num_factors):
     df = pd.DataFrame(data)
     return df
 
-def write_to_file(df, default_rates, recovery_potential, model_df, output_format):
+def write_to_file(df, default_rates, recovery_potential, model_df):
     """
     Write data to file.
 
@@ -139,38 +138,20 @@ def write_to_file(df, default_rates, recovery_potential, model_df, output_format
         default_rates (dict): Dictionary containing default rates.
         recovery_potential (dict): Dictionary containing recovery potential.
         model_df (DataFrame): DataFrame containing the model configuration.
-        output_format (str): Output file format.
     """
 
     # Convert dictionaries to DataFrames with specific column names
     df_default_rates = pd.DataFrame(list(default_rates.values()), index=['Investment', 'Speculative', 'C'], columns=range(1, 11))
     df_recovery_potential = pd.DataFrame(list(recovery_potential.values()), index=['Investment', 'Speculative', 'C'], columns=range(1, 11))
 
-    if output_format == 'csv':
-        # Write the DataFrame to a CSV file
-        df.to_csv(os.path.join('..', 'data', 'GHG_Data.csv'), index=False)
-    
-        # Save DataFrames to csv files
-        df_default_rates.to_csv(os.path.join('..', 'data', 'Default_Rates.csv'))
-        df_recovery_potential.to_csv(os.path.join('..', 'data', 'Recovery_Potential.csv'))
-        model_df.to_csv(os.path.join('..', 'data', 'Model_Config.csv'), index=False)
-    elif output_format == 'tsv':
-        # Write the DataFrame to a TSV file
-        df.to_csv(os.path.join('..', 'data', 'GHG_Data.tsv'), sep='\t', index=False)
-    
-        # Save DataFrames to tsv files
-        df_default_rates.to_csv(os.path.join('..', 'data', 'Default_Rates.tsv'), sep='\t')
-        df_recovery_potential.to_csv(os.path.join('..', 'data', 'Recovery_Potential.tsv'), sep='\t')
-        model_df.to_csv(os.path.join('..', 'data', 'Model_Config.tsv'), sep='\t', index=False)
-    else:
-        # Write the DataFrame to an Excel file
-        with pd.ExcelWriter(os.path.join('..', 'data', 'GHG_Data.xlsx')) as writer:
-            df.to_excel(writer, sheet_name='Project Data', index=False)
+    # Write the DataFrame to an Excel file
+    with pd.ExcelWriter(os.path.join('..', 'data', 'GHG_Data.xlsx')) as writer:
+        df.to_excel(writer, sheet_name='Project Data', index=False)
 
-            # Save DataFrames to Excel worksheets
-            df_default_rates.to_excel(writer, sheet_name='Default Rates')
-            df_recovery_potential.to_excel(writer, sheet_name='Recovery Potential')
-            model_df.to_excel(writer, sheet_name='Model Config', index=False)
+        # Save DataFrames to Excel worksheets
+        df_default_rates.to_excel(writer, sheet_name='Default Rates')
+        df_recovery_potential.to_excel(writer, sheet_name='Recovery Potential')
+        model_df.to_excel(writer, sheet_name='Model Config', index=False)
 
 if __name__ == "__main__":
     try:
@@ -189,12 +170,12 @@ if __name__ == "__main__":
 
         df = generate_data(num_projects, num_buckets, num_factors)
         model_df = generate_model(num_buckets, num_factors)
-        write_to_file(df, default_rates, recovery_potential, model_df, args.output)
+        write_to_file(df, default_rates, recovery_potential, model_df)
 
-        print(f"Generated {num_projects} projects with {num_buckets} risk buckets and {num_factors} factors and saved to {args.output.upper()} files in the '../data' directory.")
+        print(f"Generated {num_projects} projects with {num_buckets} risk buckets and {num_factors} factors and saved to GHG_Data.xlsx in the '../data' directory.")
 
     except IOError as e:
-        logging.error(f"An error occurred while writing to the {args.output.upper()} file: {e}")
+        logging.error(f"An error occurred while writing to the GHG_Data.xlsx file: {e}")
     except Exception as e:
         logging.error(f"An unexpected error occurred: {e}")
         raise

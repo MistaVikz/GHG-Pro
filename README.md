@@ -34,10 +34,8 @@ Note: Make sure you have Python [3.0] or higher installed on your system.
 To run the GHG_Pro project, navigate to the main directory and execute the project_risk.py file using Python:
 python project_risk.py
 
-This will read in the data and perform the analysis. By default, it will look for an Excel file named GHG_Data.xlsx in the data directory. However, you can specify the input file format as either 'excel', 'csv', or 'tsv' by passing an optional command line argument, like this:
-python project_risk.py -i csv
-
-If you choose 'csv', the script will instead look for three separate CSV files named GHG_Data.csv, Default_Rates.csv, and Recovery_Potential.csv in the data directory. If you choose 'tsv', the script will look for three separate TSV files named GHG_Data.tsv, Default_Rates.tsv, and Recovery_Potential.tsv in the data directory.
+This will read in the data and perform the analysis. By default, it will look for an Excel file named GHG_Data.xlsx in the data directory. You can specify the input file by passing an optional command line argument, like this:
+python project_risk.py -i your_file.xlsx
 
 You can also control whether the console output is displayed or not by using the -d option. To display the console output, use -d on:
 python project_risk.py -d on
@@ -50,11 +48,10 @@ By default, the console output is displayed.
 If you want to generate sample data for testing purposes, you can use the generate_project_risk_data.py script located in the scripts directory. To generate sample data, run the following command:
 python scripts/generate_project_risk_data.py
 
-By default, this script will generate 100 test projects with 5 risk buckets and 5 risk factors and save them to an Excel file named GHG_Data.xlsx. You can specify the number of test projects, risk buckets, and risk factors to generate by passing optional command line arguments, like this:
+By default, this script will generate 100 test projects with 5 risk buckets and 5 risk factors and save them to an Excel file named GHG_Data.xlsx in the data directory. You can specify the number of test projects, risk buckets, and risk factors to generate by passing optional command line arguments, like this:
 python scripts/generate_project_risk_data.py -p 10 -b 3 -f 4
 
-Replace 10 with the desired number of test projects, 3 with the desired number of risk buckets, and 4 with the desired number of risk factors. The number of test projects must be an integer between 0 and 1000, the number of risk buckets must be an integer between 1 and 10, and the number of risk factors must be an integer between 1 and 10. You can also specify the output file format as either 'excel', 'csv', or 'tsv' by adding the -o option, like this:
-python scripts/generate_project_risk_data.py -p 10 -b 3 -f 4 -o csv
+Replace 10 with the desired number of test projects, 3 with the desired number of risk buckets, and 4 with the desired number of risk factors. The number of test projects must be an integer between 0 and 1000, the number of risk buckets must be an integer between 1 and 10, and the number of risk factors must be an integer between 1 and 10. 
 
 Note: Make sure you have the required dependencies installed (see the Requirements section above) before running the project.
 
@@ -130,7 +127,7 @@ Before creating the new workbook, the subroutine checks if a file named "GHG_Dat
 Once the new workbook is created, it is ready to be analyzed by the GHG_Pro.py. GHG_Pro.py is called to analyze the projects in GHG_Data.xls. This Python script uses xlwings to interact with the Excel file and perform the analysis. The results of the analysis are then saved to the output directory
 
 ### Data and Inputs
-This project either requires a single excel input file, GHG_Data.xlsx, located in the data directory, or 4 csv/tsv files (ex: GHG_Data.csv, Default_Rates.csv, Recovery_Potential.csv, Model_Config.csv). The file(s) need to have the following organization:
+This project either requires a single excel input file, GHG_Data.xlsx, located in the data directory. The file needs to have the following organization:
 
 #### Project Data
 This sheet should contain the following columns:
@@ -212,7 +209,7 @@ The data from the 4 sheets is loaded and processed by the `load_and_process_data
 - Replaces NaN values with 0 in the risk bucket factors and weights columns of df_project.
 - Converts the 'Screening Date' column of df_project to datetime format.
 
-Please ensure that the input file adheres to this column structure and formatting to ensure proper functioning of the project. If using CSV files, please ensure that there are four separate files named 'GHG_Data.csv', 'Default_Rates.csv', 'Recovery_Potential.csv', and 'Model_Config.csv'.
+Please ensure that the input file adheres to this column structure and formatting to ensure proper functioning of the project.
 
 The `valid_project_data` function validates the data in the df_project DataFrame by checking the following conditions:
 
@@ -245,11 +242,10 @@ The `valid_model` function checks if df_model contains a valid model configurati
 If any of these conditions are not me, the function returns False. Otherwise, it returns True.
 
 ### Output
-After running the GHG_Pro project, three output files will be generated:
+After running the GHG_Pro project, two output files will be generated:
 
-- GHG_Data_Simulation.xlsx: This file contains the detailed analysis output for every project that was screened.
+- GHG_Data_Simulation.xlsx: This file contains the detailed analysis output for every project that was screened, including the model configuration data used for the simulation.
 - Project_Risk_Summary_Data.xlsx: This file summarizes the simulation results by country, counterparty, technology, and by year.
-- Model_Config.xlsx: This file contains the model configuration data used for the simulation.
 
 Both output files will be saved to a timestamped subfolder in the /output directory. The subfolder name will reflect the date and time when the analysis was run, allowing you to easily keep track of different runs and compare results.
 

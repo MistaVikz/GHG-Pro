@@ -3,14 +3,15 @@ from utils.risk_calculation import *
 from utils.analysis import *
 import logging
 import argparse
+import os
 
 NUM_YEARS = 10
 
 logging.basicConfig(level=logging.INFO)
 
-def main(input_choice='excel', display_output=True):
+def main(display_output=True, input_file='GHG_Data.xlsx'):
     try:
-        risk_bucket_count, risk_factor_count, df_project, df_default_rates, df_recovery_potential, df_model = load_and_process_data(input_choice)
+        risk_bucket_count, risk_factor_count, df_project, df_default_rates, df_recovery_potential, df_model = load_and_process_data(input_file)
 
         if valid_project_data(df_project, risk_bucket_count, risk_factor_count) and check_df_format(df_default_rates, df_recovery_potential) and valid_model(df_model, risk_bucket_count, risk_factor_count):        
             # Calculate Risk Bucket Risk Scores and Ratings for each risk bucket 
@@ -42,15 +43,9 @@ def main(input_choice='excel', display_output=True):
                 display_project_risk_output(df_counts, top_projects, bottom_projects, country_table, technology_table, counterparty_table, total_volumes_per_year)
             output_folder = create_output_folder()
             export_project_risk_output(output_folder, top_projects, bottom_projects, country_table, technology_table, counterparty_table, df_counts, total_volumes_per_year)
-            export_model_config(output_folder,df_model)
-            export_ghg_data(output_folder, df_project,df_default_rates,df_recovery_potential)
+            export_ghg_data(output_folder, df_project,df_default_rates,df_recovery_potential,df_model)
         else:
-            if input_choice == 'excel':
-                print("Data not loaded properly from GHG_Data.xlsx")
-            elif input_choice == 'tsv':
-                print("Data not loaded properly from GHG_Data.tsv, Default_Rates.tsv, and/or Recovery_Potential.tsv, and/or Model_Config.tsv")
-            else:
-                print("Data not loaded properly from GHG_Data.csv, Default_Rates.csv, and/or Recovery_Potential.csv and/or Model_Config.csv")
+            print(f"Data not loaded properly from {input_file}")
                 
     except FileNotFoundError as e:
         logging.error(f"File not found: {str(e)}")
@@ -65,8 +60,9 @@ def main(input_choice='excel', display_output=True):
         raise
 
 if __name__ == "__main__":
+    os.chdir('./data')
     parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--input', choices=['excel', 'csv', 'tsv'], default='excel', help='Input file format')
+    parser.add_argument('-i', '--input', type=str, default='GHG_Data.xlsx', help='Input file')
     parser.add_argument('-d', '--display', type=str, choices=['on', 'off'], default='on', help='Display console output')
     args = parser.parse_args()
-    main(args.input, args.display == 'on')
+    main(display_output=args.display == 'on', input_file=args.input)
