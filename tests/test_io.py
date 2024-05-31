@@ -204,7 +204,6 @@ class TestCheckDfFormat(unittest.TestCase):
         self.assertFalse(check_df_format(self.df_default_rates, self.df_recovery_potential))
 
 class TestValidModel(unittest.TestCase):
-
     def setUp(self):
         self.risk_bucket_count = 2
         self.risk_factor_count = 2
@@ -215,26 +214,169 @@ class TestValidModel(unittest.TestCase):
                 self.required_columns.append(f'risk_bucket_{i}_factor_{j}_name')
                 self.required_columns.append(f'risk_bucket_{i}_factor_{j}_rules')
 
-    def test_valid_model(self):
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_valid_model(self, mock_stdout):
         data = {col: [0] for col in self.required_columns}
         df_model = pd.DataFrame(data)
         self.assertTrue(valid_model(df_model, self.risk_bucket_count, self.risk_factor_count))
 
-    def test_invalid_model_missing_columns(self):
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_invalid_model_missing_columns(self, mock_stdout):
         data = {col: [0] for col in self.required_columns[:-1]}
         df_model = pd.DataFrame(data)
         self.assertFalse(valid_model(df_model, self.risk_bucket_count, self.risk_factor_count))
 
-    def test_invalid_model_extra_columns(self):
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_invalid_model_extra_columns(self, mock_stdout):
         data = {col: [0] for col in self.required_columns}
         data['extra_column'] = [0]
         df_model = pd.DataFrame(data)
         self.assertFalse(valid_model(df_model, self.risk_bucket_count, self.risk_factor_count))
 
-    def test_invalid_model_multiple_rows(self):
+    @patch('sys.stdout', new_callable=StringIO)
+    def test_invalid_model_multiple_rows(self, mock_stdout):
         data = {col: [0, 0] for col in self.required_columns}
         df_model = pd.DataFrame(data)
         self.assertFalse(valid_model(df_model, self.risk_bucket_count, self.risk_factor_count))
+
+class TestLoadAndProcessData(unittest.TestCase):
+    @patch('pandas.read_excel')
+    def test_load_and_process_data(self, mock_read_excel):
+        # Create mock dataframes
+        df_project = pd.DataFrame({'project_id': [1, 2], 'project_name': ['Project 1', 'Project 2']})
+        df_project['screening_date'] = pd.to_datetime(['2022-01-01', '2022-01-02'])
+        df_project['risk_bucket_1_factor_1'] = [0.1, 0.2]
+        df_project['risk_bucket_1_factor_2'] = [0.3, 0.4]
+        df_project['risk_bucket_2_factor_1'] = [0.5, 0.6]
+        df_project['risk_bucket_2_factor_2'] = [0.7, 0.8]
+        df_default_rates = pd.DataFrame({'Unnamed: 0': ['Investment', 'Speculative'], 1: [0.1, 0.2]})
+        df_recovery_potential = pd.DataFrame({'Unnamed: 0': ['Investment', 'Speculative'], 1: [0.1, 0.2]})
+        df_model = pd.DataFrame({'model_id': [1], 'model_name': ['Model 1']})
+
+        # Mock read_excel function to return mock dataframes
+        mock_read_excel.side_effect = [df_project, df_default_rates, df_recovery_potential, df_model]
+
+        # Load and process data from mock Excel file
+        num_buckets, num_risk_factors, df_project, df_default_rates, df_recovery_potential, df_model = load_and_process_data('mock_file.xlsx')
+
+        # Verify output
+        self.assertEqual(num_buckets, 2)
+        self.assertEqual(num_risk_factors, 2)
+        self.assertTrue(df_project.equals(pd.DataFrame({'project_id': [1, 2], 'project_name': ['Project 1', 'Project 2'], 'screening_date': pd.to_datetime(['2022-01-01', '2022-01-02']), 'risk_bucket_1_factor_1': [0.1, 0.2], 'risk_bucket_1_factor_2': [0.3, 0.4], 'risk_bucket_2_factor_1': [0.5, 0.6], 'risk_bucket_2_factor_2': [0.7, 0.8]})))
+        self.assertTrue(df_default_rates.equals(pd.DataFrame({1: [0.1, 0.2]}, index=['Investment', 'Speculative'])))
+        self.assertTrue(df_recovery_potential.equals(pd.DataFrame({1: [0.1, 0.2]}, index=['Investment', 'Speculative'])))
+        self.assertTrue(df_model.equals(pd.DataFrame({'model_id': [1], 'model_name': ['Model 1']})))
+
+    @patch('pandas.read_excel')
+    def test_load_and_process_data_failure(self, mock_read_excel):
+        # Mock read_excel function to raise an exception
+        mock_read_excel.side_effect = ValueError('Worksheet not found')
+
+        # Load and process data from mock Excel file
+        with self.assertRaises(ValueError):
+            load_and_process_data('mock_file.xlsx')
+
+class TestCreateOutputFolder(unittest.TestCase):
+    @patch('os.makedirs')
+    def test_create_output_folder_success(self, mock_makedirs):
+        # Mock the current date and time
+        now = datetime.datetime(2022, 1, 1, 12, 0, 0)
+        with patch('datetime.datetime') as mock_datetime:
+            mock_datetime.now.return_value = now
+
+            # Call the function
+            folder_name = create_output_folder()
+
+            # Check that the correct path was passed to os.makedirs
+            current_dir = os.path.dirname(create_output_folder.__code__.co_filename)
+            output_dir = os.path.join(current_dir, '..', 'output')
+            expected_folder_name = os.path.join(output_dir, '20220101_120000')
+            mock_makedirs.assert_called_once_with(expected_folder_name, exist_ok=True)
+
+            # Check that the function returned the correct folder name
+            self.assertEqual(folder_name, expected_folder_name)
+
+    @patch('os.makedirs')
+    def test_create_output_folder_failure(self, mock_makedirs):
+        # Mock the current date and time
+        now = datetime.datetime(2022, 1, 1, 12, 0, 0)
+        with patch('datetime.datetime') as mock_datetime:
+            mock_datetime.now.return_value = now
+
+            # Set up os.makedirs to raise an error
+            mock_makedirs.side_effect = OSError('Test error')
+
+            # Call the function and check that it raises an error
+            with self.assertRaises(OSError):
+                create_output_folder()
+
+class TestExportGHGData(unittest.TestCase):
+    def test_export_ghg_data(self):
+        # Create some sample DataFrames
+        df_project = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+        df_default_rates = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]}, index=['Investment', 'Speculative', 'C'])
+        df_recovery_potential = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]}, index=['Investment', 'Speculative', 'C'])
+        df_model = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+
+        # Create a mock object for the open function
+        with patch('openpyxl.workbook.workbook.save_workbook') as mock_save:
+            # Call the function with the mock object
+            export_ghg_data('', df_project, df_default_rates, df_recovery_potential, df_model)
+
+            # Check that the save_workbook function was called
+            mock_save.assert_called_once()
+    
+    def test_export_ghg_data_error(self):
+        # Create some sample DataFrames
+        df_project = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+        df_default_rates = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+        df_recovery_potential = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+        df_model = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+
+        # Create a mock object for the open function
+        with patch('openpyxl.workbook.workbook.save_workbook') as mock_save:
+            # Call the function with the mock object
+            with self.assertRaises(KeyError):
+                export_ghg_data('', df_project, df_default_rates, df_recovery_potential, df_model)
+
+            # Check that the save_workbook function was not called
+            mock_save.assert_not_called()
+
+class TestExportProjectRiskOutput(unittest.TestCase):
+    def test_export_project_risk_output(self):
+        # Create some sample DataFrames
+        top_projects = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+        bottom_projects = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+        country_table = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+        technology_table = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+        counterparty_table = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+        df_counts = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+        total_volumes_per_year = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+
+        # Create a mock object for the open function
+        with patch('openpyxl.workbook.workbook.save_workbook') as mock_save:
+            # Call the function with the mock object
+            export_project_risk_output('', top_projects, bottom_projects, country_table, technology_table, counterparty_table, df_counts, total_volumes_per_year)
+
+            # Check that the save_workbook function was called
+            mock_save.assert_called_once()
+
+    def test_export_project_risk_output_fails(self):
+        # Create some sample DataFrames
+        top_projects = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+        bottom_projects = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+        country_table = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+        technology_table = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+        counterparty_table = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+        df_counts = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+        total_volumes_per_year = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+
+        # Create a mock object for the open function that raises an exception
+        with patch('openpyxl.workbook.workbook.save_workbook', side_effect=PermissionError):
+            # Call the function with the mock object
+            with self.assertRaises(PermissionError):
+                export_project_risk_output('', top_projects, bottom_projects, country_table, technology_table, counterparty_table, df_counts, total_volumes_per_year)
+
 
 if __name__ == '__main__':
     unittest.main()

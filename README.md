@@ -25,8 +25,6 @@ The GHG_Pro project is a data-driven tool designed to estimate the potential gre
 To run the GHG_Pro project, you'll need to install the required dependencies listed in the `requirements.txt` file. You can do this by running the following command in your terminal:
 pip install -r requirements.txt
 
-This will install all the necessary dependencies, including [list some of the key dependencies, e.g., pandas, numpy, etc.].
-
 Note: Make sure you have Python [3.0] or higher installed on your system.
 
 ### Usage

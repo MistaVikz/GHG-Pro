@@ -17,3 +17,4 @@
 3.6.8   2024/5/28   Bug fixes to ensure compatibility with Office 365.
 3.6.9   2024/5/30   Improved Data Validation both in excel and python.
 3.7.9   2024/5/31   Removed input support for CSV,TSV. Output now puts the model configuration in with the simulation results.
+3.7.10  2024/5/31   Added unittest for file io functions.

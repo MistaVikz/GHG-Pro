@@ -1,7 +1,3 @@
-numpy
-pandas
-python
-openpyxl
-logging
-xlrd
-xlwings
+numpy==1.26.4
+openpyxl==3.1.2
+pandas==2.2.2
