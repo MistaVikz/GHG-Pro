@@ -1,10 +1,10 @@
 import pandas as pd
 import numpy as np
 import random
-import os
 import logging
 import argparse
 from datetime import date, datetime
+import pathlib
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -34,6 +34,7 @@ def parse_args():
     parser.add_argument('-p', '--projects', type=int, default=100, help='Number of projects')
     parser.add_argument('-b', '--buckets', type=int, default=5, help='Number of risk buckets')
     parser.add_argument('-f', '--factors', type=int, default=5, help='Number of factors')
+    parser.add_argument('-csv', action='store_true', help='Export projects to CSV file')
     return parser.parse_args()
 
 def generate_data(num_projects, num_buckets, num_factors):
@@ -129,7 +130,7 @@ def generate_model(num_buckets, num_factors):
     df = pd.DataFrame(data)
     return df
 
-def write_to_file(df, default_rates, recovery_potential, model_df):
+def write_to_file(df, default_rates, recovery_potential, model_df, export_csv):
     """
     Write data to file.
 
@@ -138,20 +139,30 @@ def write_to_file(df, default_rates, recovery_potential, model_df):
         default_rates (dict): Dictionary containing default rates.
         recovery_potential (dict): Dictionary containing recovery potential.
         model_df (DataFrame): DataFrame containing the model configuration.
+        export_csv (bool): Boolean indicating whether to export projects to CSV file.
     """
 
-    # Convert dictionaries to DataFrames with specific column names
-    df_default_rates = pd.DataFrame(list(default_rates.values()), index=['Investment', 'Speculative', 'C'], columns=range(1, 11))
-    df_recovery_potential = pd.DataFrame(list(recovery_potential.values()), index=['Investment', 'Speculative', 'C'], columns=range(1, 11))
+    # Get the absolute path to the data directory
+    data_dir = pathlib.Path(__file__).parent.parent / 'data'
 
-    # Write the DataFrame to an Excel file
-    with pd.ExcelWriter(os.path.join('..', 'data', 'GHG_Data.xlsx')) as writer:
-        df.to_excel(writer, sheet_name='Project Data', index=False)
+    # Create the data directory if it does not exist
+    data_dir.mkdir(parents=True, exist_ok=True)
 
-        # Save DataFrames to Excel worksheets
-        df_default_rates.to_excel(writer, sheet_name='Default Rates')
-        df_recovery_potential.to_excel(writer, sheet_name='Recovery Potential')
-        model_df.to_excel(writer, sheet_name='Model Config', index=False)
+    if export_csv:
+        df.to_csv(data_dir / 'GHG_Projects.csv', index=False)
+    else:
+        # Convert dictionaries to DataFrames with specific column names
+        df_default_rates = pd.DataFrame(list(default_rates.values()), index=['Investment', 'Speculative', 'C'], columns=range(1, 11))
+        df_recovery_potential = pd.DataFrame(list(recovery_potential.values()), index=['Investment', 'Speculative', 'C'], columns=range(1, 11))
+
+        # Write the DataFrame to an Excel file
+        with pd.ExcelWriter(data_dir / 'GHG_Data.xlsx') as writer:
+            df.to_excel(writer, sheet_name='Project Data', index=False)
+
+            # Save DataFrames to Excel worksheets
+            df_default_rates.to_excel(writer, sheet_name='Default Rates')
+            df_recovery_potential.to_excel(writer, sheet_name='Recovery Potential')
+            model_df.to_excel(writer, sheet_name='Model Config', index=False)
 
 if __name__ == "__main__":
     try:
@@ -170,7 +181,7 @@ if __name__ == "__main__":
 
         df = generate_data(num_projects, num_buckets, num_factors)
         model_df = generate_model(num_buckets, num_factors)
-        write_to_file(df, default_rates, recovery_potential, model_df)
+        write_to_file(df, default_rates, recovery_potential, model_df, args.csv)
 
         print(f"Generated {num_projects} projects with {num_buckets} risk buckets and {num_factors} factors and saved to GHG_Data.xlsx in the '../data' directory.")
 

@@ -18,3 +18,4 @@
 3.6.9   2024/5/30   Improved Data Validation both in excel and python.
 3.7.9   2024/5/31   Removed input support for CSV,TSV. Output now puts the model configuration in with the simulation results.
 3.7.10  2024/5/31   Added unittest for file io functions.
+3.7.11  2024/6/4    Output bug fix in generate_project_risk_data.
