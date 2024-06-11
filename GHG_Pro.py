@@ -1,15 +1,26 @@
-from utils.io import *
-from utils.risk_calculation import *
-from utils.analysis import *
 import logging
 import argparse
 import os
 
+from utils.io import *
+from utils.risk_calculation import *
+from utils.analysis import *
+
 NUM_YEARS = 10
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, filename='project.log')
 
 def main(display_output=True, input_file='GHG_Data.xlsx'):
+    """
+    Main function to run the project risk analysis.
+
+    Parameters:
+    display_output (bool, optional): Whether to display the output in the console. Defaults to True.
+    input_file (str, optional): The input file to load the data from. Defaults to 'GHG_Data.xlsx'.
+
+    Returns:
+    None
+    """
     try:
         risk_bucket_count, risk_factor_count, df_project, df_default_rates, df_recovery_potential, df_model = load_and_process_data(input_file)
 

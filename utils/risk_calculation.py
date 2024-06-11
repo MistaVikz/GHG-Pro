@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-def run_simulation(df_project, num_buckets, num_samples=10000, num_years=10):
+def run_simulation(df_project: pd.DataFrame, num_buckets: int, num_samples: int = 10000, num_years: int = 10) -> pd.DataFrame:
     """
     Run a simulation to calculate the projected delivery volume and its standard deviation.
 
@@ -49,9 +49,7 @@ def run_simulation(df_project, num_buckets, num_samples=10000, num_years=10):
 
     return df_project
 
-
-
-def calculate_risk_bucket_scores(df_project, num_buckets=5, num_factors=5):
+def calculate_risk_bucket_scores(df_project: pd.DataFrame, num_buckets: int = 5, num_factors: int = 5) -> pd.DataFrame:
     """
     Calculate risk bucket scores for a given DataFrame.
 
@@ -67,9 +65,12 @@ def calculate_risk_bucket_scores(df_project, num_buckets=5, num_factors=5):
     This function assumes that the input DataFrame has columns named 'risk_bucket_X_factor_Y' and 'risk_bucket_X_weight_Y',
     where X is the risk bucket number and Y is the factor number.
     """
-    for bucket in range(1, num_buckets+1):
-        factors = [f'risk_bucket_{bucket}_factor_{i}' for i in range(1, num_factors+1)]
-        weights = [f'risk_bucket_{bucket}_weight_{i}' for i in range(1, num_factors+1)]
+    for bucket in range(1, num_buckets + 1):
+        # Create lists of factor and weight columns for the current risk bucket
+        factors = [f'risk_bucket_{bucket}_factor_{i}' for i in range(1, num_factors + 1)]
+        weights = [f'risk_bucket_{bucket}_weight_{i}' for i in range(1, num_factors + 1)]
+        
+        # Calculate the risk bucket score by summing the products of factors and weights
         df_project[f'risk_bucket_{bucket}_score'] = sum(df_project[factor] * df_project[weight] for factor, weight in zip(factors, weights))
         
         # Ensure scores are between 0 and 10
@@ -77,7 +78,7 @@ def calculate_risk_bucket_scores(df_project, num_buckets=5, num_factors=5):
     
     return df_project
 
-def score_to_rating_vectorized(scores):
+def score_to_rating_vectorized(scores: pd.Series) -> pd.Series:
     """
     Determine the project rating based on the score.
 
@@ -86,17 +87,23 @@ def score_to_rating_vectorized(scores):
 
     Returns:
     pandas.Series: A series of project ratings, which can be 'Investment', 'Speculative', or 'C'.
+
+    Raises:
+    ValueError: If the scores contain NaN values or are not between 0 and 10.
     """
+    # Check for NaN values in the scores
     if scores.isnull().any():
         raise ValueError("Scores cannot contain NaN values")
 
+    # Check if all scores are between 0 and 10
     if not ((scores >= 0) & (scores <= 10)).all():
         raise ValueError("All scores must be between 0 and 10")
 
+    # Use pd.cut to assign ratings based on the scores
     ratings = pd.cut(scores, bins=[-1, 3.5, 7.5, 10], labels=['C', 'Speculative', 'Investment'], include_lowest=True)
     return ratings
     
-def calculate_yearly_shortfall(df_project, df_default_rates, df_recovery_potential, risk_bucket_count, num_years=10):
+def calculate_yearly_shortfall(df_project: pd.DataFrame, df_default_rates: pd.DataFrame, df_recovery_potential: pd.DataFrame, risk_bucket_count: int, num_years: int = 10) -> pd.DataFrame:
     """
     Calculate the shortfall for each year and risk bucket.
 
@@ -104,24 +111,32 @@ def calculate_yearly_shortfall(df_project, df_default_rates, df_recovery_potenti
     df_project (DataFrame): The DataFrame containing the project data.
     df_default_rates (DataFrame): The DataFrame containing the default rates.
     df_recovery_potential (DataFrame): The DataFrame containing the recovery potentials.
-    risk_bucket_count: The number of risk buckets.
+    risk_bucket_count (int): The number of risk buckets.
     num_years (int, optional): The number of years. Defaults to 10.
 
     Returns:
-    The DataFrame with the calculated shortfalls.
+    DataFrame: The input DataFrame with the calculated shortfalls.
     """
+    # Initialize a DataFrame to store the shortfalls
     shortfalls = pd.DataFrame(index=df_project.index)
     
+    # Iterate over each risk bucket and year
     for j in range(1, risk_bucket_count + 1):
         for i in range(1, num_years + 1):
             # Calculate the shortfall for this year and risk bucket
-            shortfalls[f'risk_bucket_{j}_shortfall_year_{i}'] = df_project.apply(lambda row: np.clip((df_default_rates.loc[row[f'risk_bucket_{j}_rating'], min(i, row['contract_duration'])] * (1 - df_recovery_potential.loc[row[f'risk_bucket_{j}_rating'], min(i, row['contract_duration'])])) / 100, 0, 1) if i <= row['contract_duration'] else np.nan, axis=1)
+            shortfalls[f'risk_bucket_{j}_shortfall_year_{i}'] = df_project.apply(
+                lambda row: np.clip(
+                    (df_default_rates.loc[row[f'risk_bucket_{j}_rating'], min(i, row['contract_duration'])] 
+                     * (1 - df_recovery_potential.loc[row[f'risk_bucket_{j}_rating'], min(i, row['contract_duration'])])) 
+                    / 100, 0, 1) if i <= row['contract_duration'] else np.nan, 
+                axis=1)
     
+    # Concatenate the shortfalls with the input DataFrame
     df_project = pd.concat([df_project, shortfalls], axis=1)
     
     return df_project
 
-def calculate_yearly_expected_value(df_project, num_risk_buckets=5, num_years=10):
+def calculate_yearly_expected_value(df_project: pd.DataFrame, num_risk_buckets: int = 5, num_years: int = 10) -> pd.DataFrame:
     """
     Calculate the yearly expected value for each risk bucket and year.
 
@@ -140,7 +155,7 @@ def calculate_yearly_expected_value(df_project, num_risk_buckets=5, num_years=10
     
     return df_project
 
-def calculate_yearly_standard_deviation(df_project, num_risk_buckets=5, num_years=10):
+def calculate_yearly_standard_deviation(df_project: pd.DataFrame, num_risk_buckets: int = 5, num_years: int = 10) -> pd.DataFrame:
     """
     Calculate the yearly standard deviation for each risk bucket and year.
 
@@ -164,5 +179,3 @@ def calculate_yearly_standard_deviation(df_project, num_risk_buckets=5, num_year
     df_project = pd.concat([df_project, std_dev], axis=1)
     
     return df_project
-
-
